@@ -74,10 +74,17 @@ npm test                                                     # unit and integrat
 - The screenshot buttons capture the 3D scene without the pin label overlay. Clipboard copy is Linux-only and needs `wl-copy` or `xclip`; otherwise use *Save screenshot*.
 - The browser client is kept as a compatibility entry point; the native client is the primary interface.
 
+## RF-FIELDWORK
+
+Product page: https://rf-fieldwork.pages.dev/layout/?lang=en
+
+Other open-source tools:
+
+- [Flux Studio](https://github.com/chloeyntu-byte/flux-studio): parametric RF passives, EMX sweeps, multi-objective search and SNPFit
+- [Cap Array Lab](https://github.com/chloeyntu-byte/cap-array-lab): capacitor-array C/Q, parasitic paths, resonance and Z11
+- [VCO ISF Explorer](https://github.com/chloeyntu-byte/vco-isf-explorer): ISF, flicker-noise up-conversion and phase-noise contributions
+
 ## License
 
 MIT, see [LICENSE](LICENSE). The bundled Three.js build keeps its own MIT notice ([NOTICE](NOTICE)).
 
-## Related tools
-
-Part of RF-FIELDWORK: Flux Studio, Cap Array Lab, VCO ISF Explorer, VCO Design Studio.

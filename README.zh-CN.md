@@ -74,10 +74,17 @@ npm test                                                     # 单元与集成�
 - 截图按钮截取的是不含 pin 标签覆盖层的三维场景。复制到剪贴板仅限 Linux，需要 `wl-copy` 或 `xclip`，否则请用 *Save screenshot*。
 - 浏览器客户端保留为兼容入口，原生客户端是主界面。
 
+## RF-FIELDWORK
+
+产品介绍页：https://rf-fieldwork.pages.dev/layout/?lang=zh（含配音演示片的工具在页面上可直接观看）
+
+其他开源工具：
+
+- [Flux Studio](https://github.com/chloeyntu-byte/flux-studio)：参数化射频无源器件、EMX 扫参、多目标优化与 SNPFit 拟合
+- [Cap Array Lab](https://github.com/chloeyntu-byte/cap-array-lab)：电容阵列 C/Q、寄生路径、谐振与 Z11
+- [VCO ISF Explorer](https://github.com/chloeyntu-byte/vco-isf-explorer)：ISF、闪烁噪声上变频与相噪贡献
+
 ## 许可
 
 MIT，见 [LICENSE](LICENSE)。内置的 Three.js 保留其自身的 MIT 声明（[NOTICE](NOTICE)）。
 
-## 相关工具
-
-属于 RF-FIELDWORK：Flux Studio、Cap Array Lab、VCO ISF Explorer、VCO Design Studio。
