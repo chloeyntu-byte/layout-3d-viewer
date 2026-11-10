@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+from __future__ import print_function
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+
+
+MINIMUM_NODE_MAJOR = 18
+
+
+def node_error(message):
+    payload = {
+        "error": {
+            "code": "VL3D-E1001",
+            "shortCode": "E1001",
+            "title": "Node.js is missing or unsupported",
+            "message": message,
+            "remedy": "Install Node.js 18 or newer, or set VL3D_NODE to its executable path.",
+        }
+    }
+    if "--json" in sys.argv[1:]:
+        sys.stderr.write(json.dumps(payload, sort_keys=True) + "\n")
+    else:
+        sys.stderr.write("VL3D-E1001: {0}\n{1}\n".format(message, payload["error"]["remedy"]))
+    return 2
+
+
+def resolve_node():
+    selected = os.environ.get("VL3D_NODE", "node")
+    if os.path.sep in selected:
+        selected = os.path.abspath(os.path.expanduser(selected))
+        return selected if os.path.isfile(selected) and os.access(selected, os.X_OK) else None
+    return shutil.which(selected)
+
+
+def main():
+    node = resolve_node()
+    if not node:
+        return node_error("Node.js was not found in PATH.")
+    try:
+        version = subprocess.check_output([node, "--version"], stderr=subprocess.STDOUT).decode("utf-8", "replace").strip()
+        major = int(version.lstrip("v").split(".", 1)[0])
+    except (OSError, subprocess.CalledProcessError, ValueError) as error:
+        return node_error("The selected Node.js executable is not usable: {0}".format(error))
+    if major < MINIMUM_NODE_MAJOR:
+        return node_error("Node.js {0} is older than the required major version {1}.".format(version, MINIMUM_NODE_MAJOR))
+    package_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    cli = os.path.join(package_root, "tools", "vl3d.mjs")
+    if not os.path.isfile(cli):
+        return node_error("The VL3D JavaScript entry point is missing: {0}".format(cli))
+    os.execv(node, [node, cli] + sys.argv[1:])
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

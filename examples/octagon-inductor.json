@@ -1,0 +1,996 @@
+{
+ "schemaVersion": 2,
+ "sourceSchemaVersion": 2,
+ "units": "um",
+ "dbuPerMicron": 1000,
+ "library": "EXAMPLE_LIB",
+ "cell": "OCT_IND",
+ "view": "layout",
+ "generatedAt": "2026-01-01T00:00:00Z",
+ "bbox": {
+  "min": [
+   -70.2148,
+   -70.2148
+  ],
+  "max": [
+   70.2148,
+   70.2148
+  ]
+ },
+ "layers": [
+  {
+   "index": 0,
+   "name": "M1",
+   "kind": "metal",
+   "semantic": "metal",
+   "routing": true,
+   "defaultVisible": true,
+   "color": "#cc9b66",
+   "z": 0.4,
+   "height": 0.3,
+   "zBottomUm": 0.4,
+   "zTopUm": 0.7,
+   "thickness": 0.3,
+   "approximate": true,
+   "shapeCount": 8
+  },
+  {
+   "index": 1,
+   "name": "M5",
+   "kind": "metal",
+   "semantic": "metal",
+   "routing": true,
+   "defaultVisible": true,
+   "color": "#c2c46b",
+   "z": 4.0,
+   "height": 0.6,
+   "zBottomUm": 4.0,
+   "zTopUm": 4.6,
+   "thickness": 0.6,
+   "approximate": true,
+   "shapeCount": 1
+  },
+  {
+   "index": 2,
+   "name": "V5",
+   "kind": "via",
+   "semantic": "via",
+   "routing": true,
+   "defaultVisible": true,
+   "color": "#8ea5c8",
+   "z": 4.6,
+   "height": 0.4,
+   "zBottomUm": 4.6,
+   "zTopUm": 5.0,
+   "thickness": 0.4,
+   "approximate": true,
+   "shapeCount": 4,
+   "lowerLayer": "M5",
+   "upperLayer": "M6",
+   "connectivitySource": "explicit"
+  },
+  {
+   "index": 3,
+   "name": "M6",
+   "kind": "metal",
+   "semantic": "metal",
+   "routing": true,
+   "defaultVisible": true,
+   "color": "#ec5aa5",
+   "z": 5.0,
+   "height": 1.2,
+   "zBottomUm": 5.0,
+   "zTopUm": 6.2,
+   "thickness": 1.2,
+   "approximate": true,
+   "shapeCount": 1
+  }
+ ],
+ "shapes": [
+  {
+   "id": 100,
+   "layer": "M6",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "SPIRAL",
+   "hierPath": "OCT_IND/SPIRAL",
+   "net": "",
+   "bbox": {
+    "min": [
+     -45.5609,
+     -41.8711
+    ],
+    "max": [
+     50.0604,
+     49.2517
+    ]
+   },
+   "points": [
+    [
+     46.0231,
+     17.6803
+    ],
+    [
+     18.0373,
+     43.1363
+    ],
+    [
+     -16.9764,
+     41.4112
+    ],
+    [
+     -39.436,
+     16.5193
+    ],
+    [
+     -37.7218,
+     -15.4321
+    ],
+    [
+     -15.0038,
+     -35.7348
+    ],
+    [
+     13.8852,
+     -34.0337
+    ],
+    [
+     32.0325,
+     -13.4914
+    ],
+    [
+     30.3474,
+     12.3348
+    ],
+    [
+     11.9835,
+     28.3287
+    ],
+    [
+     -10.7794,
+     26.6634
+    ],
+    [
+     -24.6229,
+     10.4817
+    ],
+    [
+     -22.983,
+     -9.2172
+    ],
+    [
+     -8.9888,
+     -20.9141
+    ],
+    [
+     7.6446,
+     -19.3079
+    ],
+    [
+     17.2011,
+     -7.5099
+    ],
+    [
+     15.6415,
+     6.0557
+    ],
+    [
+     6.0542,
+     13.4813
+    ],
+    [
+     -4.4385,
+     11.9912
+    ],
+    [
+     -9.7501,
+     4.6418
+    ],
+    [
+     -8.137,
+     -4.0444
+    ],
+    [
+     -14.0361,
+     -5.14
+    ],
+    [
+     -16.1185,
+     6.0733
+    ],
+    [
+     -7.8074,
+     17.573
+    ],
+    [
+     7.7224,
+     19.7784
+    ],
+    [
+     21.3136,
+     9.2517
+    ],
+    [
+     23.4496,
+     -9.3282
+    ],
+    [
+     10.7242,
+     -25.0384
+    ],
+    [
+     -10.9107,
+     -27.1276
+    ],
+    [
+     -28.7543,
+     -12.2131
+    ],
+    [
+     -30.8099,
+     12.4793
+    ],
+    [
+     -13.7123,
+     32.4649
+    ],
+    [
+     14.039,
+     34.4951
+    ],
+    [
+     36.172,
+     15.2185
+    ],
+    [
+     38.1823,
+     -15.5925
+    ],
+    [
+     16.7295,
+     -39.8766
+    ],
+    [
+     -17.1416,
+     -41.8711
+    ],
+    [
+     -43.5796,
+     -18.244
+    ],
+    [
+     -45.5609,
+     18.6876
+    ],
+    [
+     -19.7612,
+     47.2813
+    ],
+    [
+     20.2311,
+     49.2517
+    ],
+    [
+     50.0604,
+     22.1188
+    ]
+   ]
+  },
+  {
+   "id": 101,
+   "layer": "M5",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "UNDERPASS",
+   "hierPath": "OCT_IND/UNDERPASS",
+   "net": "",
+   "bbox": {
+    "min": [
+     -15.0866,
+     -7.5922
+    ],
+    "max": [
+     66.0,
+     -1.5922
+    ]
+   },
+   "points": [
+    [
+     -15.0866,
+     -7.5922
+    ],
+    [
+     66.0,
+     -7.5922
+    ],
+    [
+     66.0,
+     -1.5922
+    ],
+    [
+     -15.0866,
+     -1.5922
+    ]
+   ]
+  },
+  {
+   "id": 102,
+   "layer": "V5",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "UNDERPASS",
+   "hierPath": "OCT_IND/UNDERPASS",
+   "net": "",
+   "bbox": {
+    "min": [
+     -13.0866,
+     -6.5922
+    ],
+    "max": [
+     -12.0866,
+     -5.5922
+    ]
+   },
+   "points": [
+    [
+     -13.0866,
+     -6.5922
+    ],
+    [
+     -12.0866,
+     -6.5922
+    ],
+    [
+     -12.0866,
+     -5.5922
+    ],
+    [
+     -13.0866,
+     -5.5922
+    ]
+   ]
+  },
+  {
+   "id": 103,
+   "layer": "V5",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "UNDERPASS",
+   "hierPath": "OCT_IND/UNDERPASS",
+   "net": "",
+   "bbox": {
+    "min": [
+     -13.0866,
+     -3.5922
+    ],
+    "max": [
+     -12.0866,
+     -2.5922
+    ]
+   },
+   "points": [
+    [
+     -13.0866,
+     -3.5922
+    ],
+    [
+     -12.0866,
+     -3.5922
+    ],
+    [
+     -12.0866,
+     -2.5922
+    ],
+    [
+     -13.0866,
+     -2.5922
+    ]
+   ]
+  },
+  {
+   "id": 104,
+   "layer": "V5",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "UNDERPASS",
+   "hierPath": "OCT_IND/UNDERPASS",
+   "net": "",
+   "bbox": {
+    "min": [
+     -10.0866,
+     -6.5922
+    ],
+    "max": [
+     -9.0866,
+     -5.5922
+    ]
+   },
+   "points": [
+    [
+     -10.0866,
+     -6.5922
+    ],
+    [
+     -9.0866,
+     -6.5922
+    ],
+    [
+     -9.0866,
+     -5.5922
+    ],
+    [
+     -10.0866,
+     -5.5922
+    ]
+   ]
+  },
+  {
+   "id": 105,
+   "layer": "V5",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "UNDERPASS",
+   "hierPath": "OCT_IND/UNDERPASS",
+   "net": "",
+   "bbox": {
+    "min": [
+     -10.0866,
+     -3.5922
+    ],
+    "max": [
+     -9.0866,
+     -2.5922
+    ]
+   },
+   "points": [
+    [
+     -10.0866,
+     -3.5922
+    ],
+    [
+     -9.0866,
+     -3.5922
+    ],
+    [
+     -9.0866,
+     -2.5922
+    ],
+    [
+     -10.0866,
+     -2.5922
+    ]
+   ]
+  },
+  {
+   "id": 106,
+   "layer": "M1",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "GUARD",
+   "hierPath": "OCT_IND/GUARD",
+   "net": "GND",
+   "bbox": {
+    "min": [
+     26.7878,
+     26.7878
+    ],
+    "max": [
+     70.2148,
+     70.2148
+    ]
+   },
+   "points": [
+    [
+     70.2148,
+     29.0839
+    ],
+    [
+     29.0839,
+     70.2148
+    ],
+    [
+     26.7878,
+     64.6716
+    ],
+    [
+     64.6716,
+     26.7878
+    ]
+   ]
+  },
+  {
+   "id": 107,
+   "layer": "M1",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "GUARD",
+   "hierPath": "OCT_IND/GUARD",
+   "net": "GND",
+   "bbox": {
+    "min": [
+     -29.0839,
+     64.6716
+    ],
+    "max": [
+     29.0839,
+     70.2148
+    ]
+   },
+   "points": [
+    [
+     29.0839,
+     70.2148
+    ],
+    [
+     -29.0839,
+     70.2148
+    ],
+    [
+     -26.7878,
+     64.6716
+    ],
+    [
+     26.7878,
+     64.6716
+    ]
+   ]
+  },
+  {
+   "id": 108,
+   "layer": "M1",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "GUARD",
+   "hierPath": "OCT_IND/GUARD",
+   "net": "GND",
+   "bbox": {
+    "min": [
+     -70.2148,
+     26.7878
+    ],
+    "max": [
+     -26.7878,
+     70.2148
+    ]
+   },
+   "points": [
+    [
+     -29.0839,
+     70.2148
+    ],
+    [
+     -70.2148,
+     29.0839
+    ],
+    [
+     -64.6716,
+     26.7878
+    ],
+    [
+     -26.7878,
+     64.6716
+    ]
+   ]
+  },
+  {
+   "id": 109,
+   "layer": "M1",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "GUARD",
+   "hierPath": "OCT_IND/GUARD",
+   "net": "GND",
+   "bbox": {
+    "min": [
+     -70.2148,
+     -29.0839
+    ],
+    "max": [
+     -64.6716,
+     29.0839
+    ]
+   },
+   "points": [
+    [
+     -70.2148,
+     29.0839
+    ],
+    [
+     -70.2148,
+     -29.0839
+    ],
+    [
+     -64.6716,
+     -26.7878
+    ],
+    [
+     -64.6716,
+     26.7878
+    ]
+   ]
+  },
+  {
+   "id": 110,
+   "layer": "M1",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "GUARD",
+   "hierPath": "OCT_IND/GUARD",
+   "net": "GND",
+   "bbox": {
+    "min": [
+     -70.2148,
+     -70.2148
+    ],
+    "max": [
+     -26.7878,
+     -26.7878
+    ]
+   },
+   "points": [
+    [
+     -70.2148,
+     -29.0839
+    ],
+    [
+     -29.0839,
+     -70.2148
+    ],
+    [
+     -26.7878,
+     -64.6716
+    ],
+    [
+     -64.6716,
+     -26.7878
+    ]
+   ]
+  },
+  {
+   "id": 111,
+   "layer": "M1",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "GUARD",
+   "hierPath": "OCT_IND/GUARD",
+   "net": "GND",
+   "bbox": {
+    "min": [
+     -29.0839,
+     -70.2148
+    ],
+    "max": [
+     29.0839,
+     -64.6716
+    ]
+   },
+   "points": [
+    [
+     -29.0839,
+     -70.2148
+    ],
+    [
+     29.0839,
+     -70.2148
+    ],
+    [
+     26.7878,
+     -64.6716
+    ],
+    [
+     -26.7878,
+     -64.6716
+    ]
+   ]
+  },
+  {
+   "id": 112,
+   "layer": "M1",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "GUARD",
+   "hierPath": "OCT_IND/GUARD",
+   "net": "GND",
+   "bbox": {
+    "min": [
+     26.7878,
+     -70.2148
+    ],
+    "max": [
+     70.2148,
+     -26.7878
+    ]
+   },
+   "points": [
+    [
+     29.0839,
+     -70.2148
+    ],
+    [
+     70.2148,
+     -29.0839
+    ],
+    [
+     64.6716,
+     -26.7878
+    ],
+    [
+     26.7878,
+     -64.6716
+    ]
+   ]
+  },
+  {
+   "id": 113,
+   "layer": "M1",
+   "purpose": "drawing",
+   "type": "polygon",
+   "ownerCell": "GUARD",
+   "hierPath": "OCT_IND/GUARD",
+   "net": "GND",
+   "bbox": {
+    "min": [
+     64.6716,
+     -29.0839
+    ],
+    "max": [
+     70.2148,
+     29.0839
+    ]
+   },
+   "points": [
+    [
+     70.2148,
+     -29.0839
+    ],
+    [
+     70.2148,
+     29.0839
+    ],
+    [
+     64.6716,
+     26.7878
+    ],
+    [
+     64.6716,
+     -26.7878
+    ]
+   ]
+  }
+ ],
+ "instances": [
+  {
+   "id": 0,
+   "hierPath": "OCT_IND/SPIRAL",
+   "parentPath": "OCT_IND",
+   "name": "SPIRAL",
+   "master": {
+    "library": "EXAMPLE_LIB",
+    "cell": "SPIRAL",
+    "view": "layout"
+   },
+   "worldBBox": {
+    "min": [
+     -45.5609,
+     -41.8711
+    ],
+    "max": [
+     50.0604,
+     49.2517
+    ]
+   },
+   "bbox": {
+    "min": [
+     -45.5609,
+     -41.8711
+    ],
+    "max": [
+     50.0604,
+     49.2517
+    ]
+   },
+   "depth": 1
+  },
+  {
+   "id": 1,
+   "hierPath": "OCT_IND/UNDERPASS",
+   "parentPath": "OCT_IND",
+   "name": "UNDERPASS",
+   "master": {
+    "library": "EXAMPLE_LIB",
+    "cell": "UNDERPASS",
+    "view": "layout"
+   },
+   "worldBBox": {
+    "min": [
+     -15.0866,
+     -7.5922
+    ],
+    "max": [
+     66.0,
+     -1.5922
+    ]
+   },
+   "bbox": {
+    "min": [
+     -15.0866,
+     -7.5922
+    ],
+    "max": [
+     66.0,
+     -1.5922
+    ]
+   },
+   "depth": 1
+  },
+  {
+   "id": 2,
+   "hierPath": "OCT_IND/GUARD",
+   "parentPath": "OCT_IND",
+   "name": "GUARD",
+   "master": {
+    "library": "EXAMPLE_LIB",
+    "cell": "GUARD",
+    "view": "layout"
+   },
+   "worldBBox": {
+    "min": [
+     -70.2148,
+     -70.2148
+    ],
+    "max": [
+     70.2148,
+     70.2148
+    ]
+   },
+   "bbox": {
+    "min": [
+     -70.2148,
+     -70.2148
+    ],
+    "max": [
+     70.2148,
+     70.2148
+    ]
+   },
+   "depth": 1
+  }
+ ],
+ "pins": [
+  {
+   "id": 0,
+   "terminal": "P1",
+   "name": "P1",
+   "net": "P1",
+   "layer": "M6",
+   "purpose": "pin",
+   "ownerCell": "SPIRAL",
+   "hierPath": "OCT_IND/SPIRAL",
+   "worldBBox": {
+    "min": [
+     45.0417,
+     16.8995
+    ],
+    "max": [
+     51.0417,
+     22.8995
+    ]
+   },
+   "points": [
+    [
+     45.0417,
+     16.8995
+    ],
+    [
+     51.0417,
+     16.8995
+    ],
+    [
+     51.0417,
+     22.8995
+    ],
+    [
+     45.0417,
+     22.8995
+    ]
+   ],
+   "source": "synthetic"
+  },
+  {
+   "id": 1,
+   "terminal": "P2",
+   "name": "P2",
+   "net": "P2",
+   "layer": "M5",
+   "purpose": "pin",
+   "ownerCell": "UNDERPASS",
+   "hierPath": "OCT_IND/UNDERPASS",
+   "worldBBox": {
+    "min": [
+     60.0,
+     -7.5922
+    ],
+    "max": [
+     66.0,
+     -1.5922
+    ]
+   },
+   "points": [
+    [
+     60.0,
+     -7.5922
+    ],
+    [
+     66.0,
+     -7.5922
+    ],
+    [
+     66.0,
+     -1.5922
+    ],
+    [
+     60.0,
+     -1.5922
+    ]
+   ],
+   "source": "synthetic"
+  },
+  {
+   "id": 2,
+   "terminal": "GND",
+   "name": "GND",
+   "net": "GND",
+   "layer": "M1",
+   "purpose": "pin",
+   "ownerCell": "GUARD",
+   "hierPath": "OCT_IND/GUARD",
+   "worldBBox": {
+    "min": [
+     71.0,
+     -2
+    ],
+    "max": [
+     75.0,
+     2
+    ]
+   },
+   "points": [
+    [
+     71.0,
+     -2
+    ],
+    [
+     75.0,
+     -2
+    ],
+    [
+     75.0,
+     2
+    ],
+    [
+     71.0,
+     2
+    ]
+   ],
+   "source": "synthetic"
+  }
+ ],
+ "connections": [],
+ "shapeCount": 14,
+ "instanceCount": 3,
+ "pinCount": 3,
+ "connectionCount": 0,
+ "technology": {
+  "profile": "example-process",
+  "source": "synthetic",
+  "approximate": true,
+  "geometryApproximate": true
+ },
+ "deviceScopes": {},
+ "deviceMetadataComplete": true,
+ "exportStatus": {
+  "complete": true,
+  "truncated": false
+ },
+ "description": "Entirely synthetic octagonal inductor: M6 spiral, M5 underpass joined by a V5 via array at the centre, M1 guard ring. P1 and P2 are the two inductor terminals."
+}

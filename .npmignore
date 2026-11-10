@@ -1,0 +1,17 @@
+node_modules/
+public/data/
+backups/
+exports/
+screenshots/
+reports/
+dist/
+release/
+*.bak-*
+cds.lib
+lib.defs
+vl3d.config.json
+.env
+.env.*
+CDS.log*
+*.cdslck*
+public/assets/*palettes*

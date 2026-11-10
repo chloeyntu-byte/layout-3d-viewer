@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111412" />
+    <title>Layout 3D Viewer</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <main id="viewport" aria-label="3D layout workspace" tabindex="0">
+        <canvas id="scene" aria-label="Interactive 3D layout viewport"></canvas>
+        <canvas id="axisOverlay" aria-hidden="true"></canvas>
+        <div id="sceneGuide" class="scene-guide"><strong>Open a layout to begin</strong><span>Load a file or OA library, then select a module and one of its pins.</span><button id="openExampleBtn" type="button">Open example</button></div>
+        <div id="pinAnnotation" class="pin-annotation" hidden></div>
+        <div id="selectionLegend" class="selection-legend" aria-label="Selection legend" hidden><span class="legend-module">▧ Module</span><span class="legend-route">═ Traced route</span><span class="legend-pin">◎ Selected pin</span><span id="hiddenRoutesNote"></span></div>
+      </main>
+      <nav id="workspaceTabs" class="workspace-tabs" aria-label="Workspace panels"><button id="explorerTab" type="button" aria-pressed="true">Explore layout</button><button id="pinsTab" type="button" aria-pressed="false">Pins &amp; trace</button></nav>
+
+      <section id="browserCompatibilityNotice" class="compatibility-notice" role="alert" hidden>
+        <div id="browserCompatibilityCode" class="compatibility-code">VL3D-E8001</div>
+        <div class="compatibility-copy">
+          <strong id="browserCompatibilityTitle">Browser 3D rendering is unavailable</strong>
+          <span id="browserCompatibilityDetail">This browser cannot create the WebGL 2 context required by VL3D.</span>
+          <span>Use the native client with <code>vl3d</code> or <code>vl3d gui</code>. The browser interface remains visible for reference, but it is not a complete fallback renderer.</span>
+        </div>
+        <a id="browserCompatibilityHelp" href="./errors.html#VL3D-E8001" target="_blank" rel="noopener">Troubleshoot</a>
+      </section>
+
+      <header class="topbar" aria-label="Viewer controls">
+        <div class="topbar-primary">
+          <div class="brand" aria-label="Layout 3D Viewer">
+            <span class="mark" aria-hidden="true"></span>
+            <span class="brand-copy">
+              <strong>VL3D</strong>
+              <small>Layout 3D Viewer</small>
+            </span>
+          </div>
+
+          <div class="source-group">
+            <button id="loadLibraryBtn" type="button" title="Choose a layout file or OA library">Load</button>
+            <span id="libraryLabel" class="library-chip" title="No source loaded">No layout loaded</span>
+            <input
+              id="cellSearch"
+              class="cell-search"
+              type="search"
+              aria-label="Find layout cell"
+              placeholder="Find cell…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <label class="control source-control">
+              <span class="control-label">Cell</span>
+              <select id="cellSelect" aria-label="Layout cell" title="Cells in the loaded OA library" disabled>
+                <option value="">Load a library first</option>
+              </select>
+            </label>
+            <button id="openCellBtn" class="button accent-button" type="button" disabled title="Open the selected layout cell">
+              Open
+            </button>
+            <button id="refreshCellBtn" type="button" title="Regenerate the selected OA layout cache">
+              Refresh
+            </button>
+            <button id="advancedSettingsBtn" type="button" title="Optional loading overrides and resource settings">
+              Advanced
+            </button>
+            <button id="openFileBtn" type="button" title="Open VL3D JSON or compressed JSON">
+              Open JSON
+            </button>
+            <input
+              id="fileInput"
+              class="visually-hidden"
+              type="file"
+              accept=".json,.json.gz"
+              tabindex="-1"
+            />
+          </div>
+
+
+        </div>
+
+        <div class="view-toolbar">          <div class="toolbar-cluster view-cluster" aria-label="View presets">
+            <button id="fitBtn" type="button" title="Fit the whole layout (F)">Fit layout</button>
+            <button id="backViewBtn" type="button" title="Restore the view before Locate or Fit" disabled>Back view</button>
+            <button id="resetBtn" type="button" title="Reset the camera">Reset</button>
+            <span class="toolbar-divider" aria-hidden="true"></span>
+            <button id="viewIsoBtn" type="button" title="Isometric perspective view">ISO</button>
+            <button id="viewTopBtn" type="button" title="Top view">Top</button>
+            <button id="viewSideBtn" type="button" title="Side view">Side</button>
+          </div>
+
+          <div class="toolbar-cluster global-visibility" aria-label="Global visibility">
+            <label class="toggle" title="Show or hide all instances">
+              <input id="instancesToggle" type="checkbox" />
+              <span>Instances</span>
+            </label>
+            <label class="toggle" title="Show or hide all routed wires and vias">
+              <input id="wireToggle" type="checkbox" checked />
+              <span>Wires</span>
+            </label>
+            <label class="toggle" title="Show pins for the selected hierarchy item">
+              <input id="pinToggle" type="checkbox" checked />
+              <span>Pins</span>
+            </label>
+          </div><span class="navigation-short-help">Drag: orbit · Shift/right drag: pan · Wheel: zoom</span></div>
+        <details class="topbar-secondary" id="appearanceToolbar"><summary>Appearance &amp; visibility</summary><div class="appearance-controls">
+          <div class="toolbar-cluster render-modes" aria-label="Render modes">
+            <label class="toggle compact-toggle" title="Draw geometry as a wireframe">
+              <input id="wireframeToggle" type="checkbox" />
+              <span>Wireframe</span>
+            </label>
+            <label class="toggle compact-toggle" title="Dim unselected geometry">
+              <input id="xrayToggle" type="checkbox" />
+              <span>X-ray</span>
+            </label>
+          </div>
+
+          <label class="control select-control quality-control">
+            <span class="control-label">Quality</span>
+            <select id="qualitySelect">
+              <option value="auto">Auto</option>
+              <option value="quality">Quality</option>
+              <option value="balanced">Balanced</option>
+              <option value="fast">Fast</option>
+            </select>
+          </label>
+
+          <label class="control select-control palette-control">
+            <span class="control-label">Palette</span>
+            <select id="paletteSelect" title="Change routing fill colors without changing the UI theme or fast-mode outlines">
+              <option value="classic">Classic Dark Metal</option>
+              <option value="cyberpunk">Cyberpunk Flux</option>
+              <option value="aurora">Aurora Pulse</option>
+              <option value="plasma">Plasma Core</option>
+              <option value="titanium">Titanium Pulse</option>
+            </select>
+          </label>
+
+          <label class="control select-control theme-control">
+            <span class="control-label">Theme</span>
+            <select id="themeSelect">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </label>
+
+          <details class="performance-details"><summary>Rendering details</summary><div id="performanceInfo" class="performance-chip">Renderer ready</div></details>
+          </div>
+        </details>
+      </header>
+
+      <aside class="sidebar workspace-panel" aria-label="Layout explorer">
+        <details class="workspace-drawer" open>
+          <summary>
+            <span>Explore layout</span>
+            <span class="summary-hint">Tap to collapse</span>
+          </summary>
+          <div class="drawer-body sidebar-scroll">
+            <details class="panel" open>
+              <summary>
+                <span>Hierarchy</span>
+                <span id="hierarchyDepthValue" class="summary-value">Depth 8</span>
+              </summary>
+              <div class="panel-body">
+                <div class="panel-actions">
+                  <button id="hierarchyAllBtn" type="button" title="Select all currently visible hierarchy rows">Select shown</button>
+                  <button id="hierarchyNoneBtn" type="button" title="Clear all hierarchy nodes">Clear modules</button>
+                  <button id="clearHierarchyBtn" class="text-button" type="button">Clear all</button>
+                </div>
+                <p id="selectionScopeNote" class="list-note">Select an instance to inspect its own pins. Checkboxes add modules.</p>
+                <label class="search-field">
+                  <span class="search-icon" aria-hidden="true"></span>
+                  <input id="hierarchySearch" type="search" placeholder="Search instance or master" autocomplete="off" />
+                </label>
+                <label class="range-row compact-range">
+                  <span>Depth</span>
+                  <input id="hierarchyDepth" type="range" min="0" max="12" step="1" value="8" />
+                </label>
+                <label class="stacked-control">
+                  <span>Master quick select</span>
+                  <select id="highlightSelect">
+                    <option value="">All masters</option>
+                  </select>
+                </label>
+                <div id="hierarchyList" class="hierarchy-list data-list" role="tree" aria-label="Layout hierarchy">
+                  <div class="empty-state">Hierarchy will appear after loading.</div>
+                </div>
+              </div>
+            </details>
+
+            <details class="panel" open>
+              <summary>
+                <span>Nets</span>
+                <span class="summary-value">Trace</span>
+              </summary>
+              <div class="panel-body">
+                <div class="panel-actions align-end">
+                  <button id="clearNetBtn" class="text-button" type="button">Clear trace</button>
+                </div>
+                <label class="search-field">
+                  <span class="search-icon" aria-hidden="true"></span>
+                  <input id="netSearch" type="search" placeholder="Search scoped net" autocomplete="off" />
+                </label>
+                <div id="netList" class="net-list data-list" role="listbox" aria-label="Nets">
+                  <div class="empty-state">Select a module or search for a net.</div>
+                </div>
+              </div>
+            </details>
+
+            <details class="panel" open>
+              <summary>
+                <span>Layers</span>
+                <span class="summary-value">Stack</span>
+              </summary>
+              <div class="panel-body">
+                <div class="panel-actions">
+                  <button id="legendAllBtn" type="button" title="Show routing conductors; auxiliary layers remain manually selectable">Conductors</button>
+                  <button id="legendNoneBtn" type="button" title="Hide all layers">None</button>
+                </div>
+                <label class="stacked-control"><span>Layer list</span><select id="layerFilter"><option value="conductive">Conductors first</option><option value="shown">Shown only</option><option value="all">All layers</option></select></label>
+                <div id="layerList" class="layer-list"></div>
+                <div id="legendList" hidden aria-hidden="true"></div>
+              </div>
+            </details>
+
+            <details class="panel" open>
+              <summary>
+                <span>3D appearance</span>
+                <span class="summary-value">Perspective</span>
+              </summary>
+              <div class="panel-body scale-panel">
+                <div id="technologyNotice" class="technology-notice" hidden></div>
+                <details class="interaction-settings">
+                  <summary>
+                    <span>Navigation</span>
+                    <span id="navigationSummary" class="summary-value">Natural</span>
+                  </summary>
+                  <div class="interaction-settings-body">
+                    <label class="stacked-control">
+                      <span>Control mode</span>
+                      <select id="navigationModeSelect">
+                        <option value="natural">Natural · drag the layout</option>
+                        <option value="cad">CAD · orbit the camera</option>
+                      </select>
+                    </label>
+                    <div class="direction-options" aria-label="Navigation direction overrides">
+                      <label class="toggle compact-toggle" title="Reverse horizontal orbit direction">
+                        <input id="invertOrbitXToggle" type="checkbox" />
+                        <span>Reverse horizontal</span>
+                      </label>
+                      <label class="toggle compact-toggle" title="Reverse vertical orbit direction">
+                        <input id="invertOrbitYToggle" type="checkbox" />
+                        <span>Reverse vertical</span>
+                      </label>
+                      <label class="toggle compact-toggle" title="Reverse drag-to-pan direction">
+                        <input id="invertPanToggle" type="checkbox" />
+                        <span>Reverse pan</span>
+                      </label>
+                      <label class="toggle compact-toggle" title="Reverse wheel and touch-pad zoom direction">
+                        <input id="invertWheelToggle" type="checkbox" />
+                        <span>Reverse wheel</span>
+                      </label>
+                    </div>
+                    <div class="navigation-hint">Left drag: orbit · Shift/right drag: pan · Wheel: zoom</div>
+                  </div>
+                </details>
+                <button id="physicalZBtn" type="button">Physical Z 1×</button>
+                <label class="range-row value-range">
+                  <span>Z exaggeration</span>
+                  <input id="zScale" type="range" min="0.1" max="4" step="0.1" value="1" />
+                  <output id="zScaleValue" for="zScale">10×</output>
+                </label>
+                <label class="range-row">
+                  <span>Opacity</span>
+                  <input id="alphaScale" type="range" min="0.2" max="1" step="0.05" value="1" />
+                </label>
+                <label class="range-row value-range">
+                  <span>FOV</span>
+                  <input id="fovScale" type="range" min="20" max="85" step="1" value="52" />
+                  <output id="fovValue" for="fovScale">52°</output>
+                </label>
+                <label class="range-row">
+                  <span>Via LOD</span>
+                  <input id="viaMerge" type="range" min="0" max="5" step="0.5" value="0" />
+                </label>
+                <div id="viaMergeValue" class="range-value">Exact vias</div>
+              </div>
+            </details>
+          </div>
+        </details>
+      </aside>
+
+      <aside id="inspectorPanel" class="inspector-panel workspace-panel" aria-label="Selection inspector">
+        <details class="workspace-drawer inspector-drawer" open>
+          <summary>
+            <span>Inspector</span>
+            <span class="summary-hint">Tap to collapse</span>
+          </summary>
+          <div class="drawer-body inspector-scroll">
+            <section class="inspector-section selection-section">
+              <div class="inspector-heading">
+                <div>
+                  <span class="eyebrow">Selection</span>
+                  <h2 id="selectionTitle">Nothing selected</h2>
+                </div>
+                <span class="selection-indicator" aria-hidden="true"></span>
+              </div>
+              <div id="stackPositionNotice" class="technology-notice" role="status" hidden></div>
+              <details id="selectionDetailDisclosure"><summary>Full path and geometry</summary><div id="selectionDetails" class="selection-details">Select a module to inspect its own pins.</div></details>
+              <div id="selectionActions" class="selection-actions"></div>
+            </section>
+
+            <section class="inspector-section pin-section">
+              <div class="section-title-row"><h3>Pins</h3><span id="pinCountNote" class="section-meta">Select a module</span></div>
+              <label class="search-field"><span class="search-icon" aria-hidden="true"></span><input id="pinSearch" type="search" placeholder="Find pin or full instance path" aria-label="Filter pins" /></label>
+              <label class="pin-layer-filter"><span>Layer</span><select id="pinLayerFilter"><option value="">All pin layers</option></select></label>
+              <div id="pinList" class="inspector-list"><div class="empty-state">Select a module to list its own pins.</div></div>
+            </section>
+
+            <section class="inspector-section trace-controls" aria-label="Connectivity trace">
+              <h3>Connectivity trace</h3><p class="list-note">Select one pin, or trace all own pins of the selected modules. Selection keeps your current view.</p>
+              <label>Mode <select id="traceMode"><option value="physical">Physical geometry</option><option value="named">Named nets</option></select></label>
+              <label>Scope <select id="traceScope"><option value="layout">Whole layout</option><option value="module">Selected modules</option></select></label>
+              <div class="selection-actions"><button type="button" id="tracePhysicalBtn" disabled>Trace selected pin</button><button type="button" id="cancelPhysicalTraceBtn" disabled>Cancel trace</button></div>
+              <p id="physicalTraceStatus" role="status">Open a layout, then select a module and a pin.</p>
+              <details id="physicalTraceDiagnostics" hidden><summary>Trace diagnostics</summary><div id="physicalTraceDiagnosticText"></div></details>
+            </section>
+
+
+
+            <details class="inspector-section secondary-inspector"><summary>External connections</summary>
+              <div class="section-title-row">
+                <h3>Parent-level routes</h3>
+                <span class="section-meta">Parent-level routes</span>
+              </div>
+              <div id="connectionList" class="inspector-list">
+                <div class="empty-state">Select an instance to inspect external routes.</div>
+              </div>
+            </details>
+
+            <details class="inspector-section orientation-section"><summary>View orientation &amp; keyboard help</summary>
+              <div class="section-title-row">
+                <h3>Orientation</h3>
+                <span class="section-meta">X · Y · Z</span>
+              </div>
+              <aside id="attitudePanel" class="attitude-panel" aria-label="View orientation">
+                <canvas id="attitudeCanvas" width="136" height="136"></canvas>
+              </aside><p class="list-note">F: fit layout · 1/2/3: ISO/Top/Side · arrows: pan · Escape: clear selection. Use Tab to reach controls.</p>
+            </details>
+          </div>
+        </details>
+      </aside>
+
+      <footer class="statusbar" aria-live="polite">
+        <div id="cellStats">Ready to load a layout</div>
+        <div id="rulerInfo">Scale</div>
+        <div id="pickInfo">No selection</div>
+      </footer>
+
+      <div id="loadingOverlay" class="loading-overlay" hidden aria-live="assertive" aria-busy="true">
+        <div class="loading-card">
+          <span class="spinner" aria-hidden="true"></span>
+          <div>
+            <strong id="loadingText">Loading layout</strong>
+            <span>Preparing hierarchy and 3D geometry…</span>
+          </div>
+          <button id="cancelLoadBtn" class="loading-cancel" type="button" hidden>Cancel</button>
+        </div>
+      </div>
+
+      <div id="dropOverlay" class="drop-overlay" hidden aria-hidden="true">
+        <div class="drop-target">
+          <span class="drop-icon" aria-hidden="true"></span>
+          <strong>Drop layout data to open</strong>
+            <span>VL3D JSON or compressed JSON</span>
+        </div>
+      </div>
+
+      <dialog id="libraryDialog" class="library-dialog" aria-labelledby="libraryDialogTitle">
+        <form id="libraryForm" method="dialog">
+          <div class="dialog-heading">
+            <div>
+              <span class="eyebrow">Layout source</span>
+              <h2 id="libraryDialogTitle">Load layout</h2>
+            </div>
+            <button id="closeLibraryDialogBtn" class="dialog-close" type="button" aria-label="Close">×</button>
+          </div>
+          <p id="libraryDialogMessage" class="dialog-message" role="status">Choose a layout source. Required input appears here; Advanced contains only optional overrides.</p>
+          <label class="dialog-field"><span>Source type</span><select id="loadSourceKind"><option value="browser">Layout file · browser JSON</option><option value="oa">OA library</option><option value="stream">Local file path · GDS/OAS/JSON</option></select></label>
+          <div id="browserLoadFields" class="load-main-group"><p>Open a VL3D JSON or JSON.gz from this browser. Layer and pin information come from the file; Cadence is not required.</p><div class="dialog-actions"><button id="chooseBrowserFileBtn" type="button">Choose JSON file</button><button id="loadExampleBtn" type="button">Open example</button></div></div>
+          <div id="oaLoadFields" class="load-main-group" hidden>
+            <label class="dialog-field"><span>Library directory or library definitions file</span><input id="libraryPathInput" type="text" autocomplete="off" spellcheck="false" placeholder="/project/library or /project/cds.lib" /></label>
+            <button id="browseLibraryBtn" type="button">Browse library directory</button>
+            <p>The library is detected from this source. If several libraries are found, choose one below. Select a layout cell after loading the library.</p>
+            <details id="cdsRequirement" class="load-requirement"><summary>Library definitions · <span id="cdsInputStatus">Automatic</span></summary><label class="dialog-field"><span>cds.lib / lib.defs path</span><input id="cdsLibInput" type="text" autocomplete="off" spellcheck="false" placeholder="Automatic detection" /></label><p>Defines referenced libraries. Enter a file path if automatic detection cannot resolve the layout's references.</p></details>
+            <details id="cadenceRequirement" class="load-requirement"><summary>Cadence environment · <span id="cadenceInputStatus">Automatic</span></summary><label class="dialog-field"><span>Environment script path</span><input id="cadenceEnvInput" type="text" autocomplete="off" spellcheck="false" placeholder="Automatic detection" /></label><p>A site environment script that prepares Virtuoso and its libraries, not the Cadence installation directory. Required for a new OA export if no working environment is detected. Cached JSON remains viewable.</p></details>
+          </div>
+          <div id="streamLoadFields" class="load-main-group" hidden>
+            <label class="dialog-field"><span>File path on the machine running VL3D</span><input id="streamPathInput" type="text" spellcheck="false" placeholder="/project/top.gds, top.oas or layout.json" /></label><p>This is a local server file path, not a browser upload filename. GDS/OAS import uses the local geometry runtime; Cadence is not required.</p>
+            <p id="jsonRulesNote" class="list-note" hidden>JSON keeps its embedded layer rules. Layer maps and PDK profiles do not relabel an existing JSON file. Re-import the original GDS/OAS with verified mapping, or correct and refresh its OA export.</p>
+            <label class="dialog-field"><span>Top cell · automatic unless several are found</span><input id="streamTopInput" type="text" spellcheck="false" placeholder="Automatic" /></label>
+            <details id="layerMapRequirement" class="load-requirement"><summary>Layer map · <span id="layerMapInputStatus">Automatic</span></summary><label class="dialog-field"><span>Layer map JSON path</span><input id="streamLayerMapInput" type="text" spellcheck="false" placeholder="Automatic mapping" /></label><p>Maps stream layer numbers to conductors and explicit VIA endpoints. Supply a map when automatic recognition is incomplete; unsupported layers remain visible in Layers for inspection.</p></details>
+            <details id="pinAnnotationsSettings" class="load-requirement"><summary>Pin annotations · optional for viewing</summary><label class="dialog-field"><span>Pin annotation JSON path</span><input id="pinAnnotationsInput" type="text" spellcheck="false" placeholder="No sidecar selected" /></label><p>GDS/OAS geometry alone does not define pins. To trace a pin, select a sidecar created for this exact source, with explicit instance path, layer and geometry. Existing source geometry is preserved. First import once to inspect the exact source and hierarchy; create a sidecar from the inspection template, then import again with the sidecar. <a href="/api/guides/pin-annotation" target="_blank" rel="noopener">Pin annotation guide and examples</a>.</p></details>
+          </div>
+          <details id="pdkRequirement" class="load-requirement" hidden><summary>PDK profile · <span id="pdkInputStatus">Automatic mapping; inspect Layers</span></summary><label class="dialog-field"><span>PDK profile JSON path</span><input id="pdkProfileInput" type="text" spellcheck="false" placeholder="Automatic detection" /></label><p>A viewer profile describing layer types and connector endpoints, not a PDK installation directory. Needed only when automatic mapping does not provide the required information. The loaded Layers and trace diagnostics show any remaining uncertainty.</p></details>
+          <div id="loadCellFields" class="load-main-group" hidden><label class="dialog-field"><span>Layout cell</span><select id="loadCellSelect"></select></label><button id="loadChosenCellBtn" type="button" disabled>Open cell</button><p>Ready caches open immediately. A fresh OA export requires the source configuration above.</p></div>
+          <div id="loadCandidates" class="load-candidates" hidden><label class="dialog-field"><span id="loadCandidateLabel">Choose a detected source</span><select id="loadCandidateSelect"></select></label><button id="applyLoadCandidateBtn" type="button">Use selection and continue</button></div>
+          <details id="advancedSettings" class="advanced-settings">
+            <summary>Advanced · optional overrides</summary>
+            <div class="advanced-fields">
+              <label class="dialog-field"><span>Library name override</span><input id="libraryNameInput" type="text" autocomplete="off" spellcheck="false" placeholder="Automatic" /><small>Use only to override the detected OA library identity. Required candidate choices appear in Load.</small></label>
+              <label class="dialog-field"><span>Layout view names</span><input id="viewsInput" type="text" autocomplete="off" spellcheck="false" placeholder="layout, maskLayout" /><small>Optional OA view-name filter, separated by commas.</small></label>
+              <label class="dialog-field"><span>Resource mode</span><select id="loadResourceMode"><option value="">Automatic</option><option value="low">Low memory</option><option value="balanced">Balanced</option><option value="large">Large layout</option></select><small>Adjusts import limits. Larger limits use more memory; it does not change geometry.</small></label>
+              <label class="dialog-field"><span>Extra profile search directories</span><input id="pdkSearchDirsInput" type="text" spellcheck="false" placeholder="Automatic search" /><small>Optional viewer-profile directories, separated by semicolons.</small></label>
+              <label class="dialog-field"><span>Source checks</span><select id="loadStrictChecks"><option value="">Automatic policy</option><option value="true">Strict source checks</option><option value="false">Allow linked OA entries</option></select><small>Optional OA source policy. Snapshot and change detection remain active.</small></label>
+            </div>
+          </details>
+          <label class="remember-setting">
+            <input id="rememberLibrarySettings" type="checkbox" />
+            <span>Remember these paths and overrides on this browser</span>
+          </label>
+          <div id="resolvedSettings" class="resolved-settings" hidden></div>
+          <div class="dialog-actions">
+            <button id="cancelLibraryBtn" type="button">Cancel</button><button id="continueLoadedLibraryBtn" type="button" hidden>Continue to cached cells</button>
+            <button id="applyLibraryBtn" class="button accent-button" type="submit">Choose JSON file</button>
+          </div>
+        </form>
+      </dialog>
+    </div>
+    <script src="./src/fallback.js"></script>
+  </body>
+</html>

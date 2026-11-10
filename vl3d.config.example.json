@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "host": "127.0.0.1",
+  "port": 5177,
+  "enableOa": true,
+  "resourceMode": "balanced",
+  "cdsLib": "/path/to/project/cds.lib",
+  "cadenceEnv": "/path/to/site/cadence_env.sh",
+  "libraryPath": "/path/to/selected/OA_library",
+  "pdkProfile": "/optional/path/to/custom-pdk.json",
+  "pdkProfileDirs": [
+    "/optional/path/to/profile-directory"
+  ],
+  "streamLayerMap": "/optional/path/to/gds-layer-map.json",
+  "views": [
+    "layout",
+    "maskLayout",
+    "chip",
+    "cLayout",
+    "dLayout",
+    "ivpcell"
+  ],
+  "tools": {
+    "python": "/usr/bin/python3",
+    "browser": "/usr/bin/chromium",
+    "picker": "/usr/bin/zenity",
+    "xprop": "/usr/bin/xprop",
+    "klayout": "/usr/bin/klayout",
+    "virtuoso": "/opt/cadence/IC/tools/dfII/bin/virtuoso"
+  },
+  "native": {
+    "nativePython": "~/.local/share/vl3d/native-venv/bin/python",
+    "venv": "~/.local/share/vl3d/native-venv",
+    "palette": "classic-dark-metal",
+    "theme": "dark",
+    "zScale": 1.0,
+    "cacheMiB": 512
+  }
+}

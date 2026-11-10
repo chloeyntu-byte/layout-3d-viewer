@@ -1,0 +1,6 @@
+Package: three
+Version: 0.179.1 (r179)
+Source files:
+- build/three.module.min.js — SHA-256 06552c54e4071fbc7305117aafe6765d92c5d2a2a83507d4f05b9bf4f3d4d463
+- build/three.core.min.js — SHA-256 79f2b4f58d3e99a9948a4d3b7f6d5c2daf705bdefe9fb82ebec715623966551c
+License: MIT (see THREE-LICENSE.txt)

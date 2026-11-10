@@ -1,0 +1,22 @@
+node_modules/
+__pycache__/
+*/__pycache__/
+public/data/
+backups/
+exports/
+/screenshots/
+dist/
+release/
+reports/*.log
+reports/*.json
+*.bak-*
+cds.lib
+lib.defs
+vl3d.config.json
+.env
+.env.*
+CDS.log*
+*.cdslck*
+
+# Locally captured PDK layout images are not redistributable source assets.
+public/assets/*palettes*

@@ -1,0 +1,16 @@
+# Reviewed false positives for tools/oss_scan.py. Format: relative/path:regex
+# Run:  python3 oss_scan.py . --allow .oss-allow
+
+# "<cell>@layout.json" / "<cell>@view.json" is the on-disk cache naming convention
+# "<library>@<cell>@<view>.json" (a literal '@' separator). It is not an e-mail address.
+tests/backend/test_layer_recognition.py:@layout\.json
+tests/backend/test_trace_metadata.py:@layout\.json
+tools/STREAM_IMPORT.md:@(layout|view)\.json
+tools/build_stress_layout.py:@layout\.json
+tools/test_doctor.mjs:@layout\.json(\.gz)?
+tools/test_pdk_compat.py:@layout\.json
+
+# The scanner flags a dotted property access of the JSON request-body field "layerMap"
+# (the optional user-supplied layer-map file of the local backend API). It is not a
+# foundry layer-map file.
+tools/server.mjs:[.]layerMap

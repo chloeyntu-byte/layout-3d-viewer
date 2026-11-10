@@ -1,0 +1,1128 @@
+{
+  "schemaVersion": 2,
+  "sourceSchemaVersion": 2,
+  "units": "um",
+  "dbuPerMicron": 1000,
+  "library": "SYNTHETIC",
+  "cell": "TRACE",
+  "view": "layout",
+  "generatedAt": "2026-09-07T00:00:00Z",
+  "bbox": {
+    "min": [
+      0,
+      -3
+    ],
+    "max": [
+      18,
+      15
+    ]
+  },
+  "layers": [
+    {
+      "index": 0,
+      "name": "POLY",
+      "kind": "poly",
+      "routing": true,
+      "defaultVisible": true,
+      "color": "#b28bff",
+      "z": 0,
+      "height": 0.2,
+      "zBottomUm": 0,
+      "zTopUm": 0.2,
+      "thickness": 0.2,
+      "shapeCount": 1
+    },
+    {
+      "index": 1,
+      "name": "CT",
+      "kind": "contact",
+      "routing": true,
+      "defaultVisible": true,
+      "color": "#dddddd",
+      "z": 0.2,
+      "height": 0.2,
+      "zBottomUm": 0.2,
+      "zTopUm": 0.4,
+      "thickness": 0.2,
+      "lowerLayer": "POLY",
+      "upperLayer": "M1",
+      "connectivitySource": "explicit",
+      "shapeCount": 1
+    },
+    {
+      "index": 2,
+      "name": "M1",
+      "kind": "metal",
+      "routing": true,
+      "defaultVisible": true,
+      "color": "#e8ae46",
+      "z": 0.4,
+      "height": 0.2,
+      "zBottomUm": 0.4,
+      "zTopUm": 0.6000000000000001,
+      "thickness": 0.2,
+      "shapeCount": 7
+    },
+    {
+      "index": 3,
+      "name": "V1",
+      "kind": "via",
+      "routing": true,
+      "defaultVisible": true,
+      "color": "#f0f0f0",
+      "z": 0.6,
+      "height": 0.4,
+      "zBottomUm": 0.6,
+      "zTopUm": 1.0,
+      "thickness": 0.4,
+      "lowerLayer": "M1",
+      "upperLayer": "M2",
+      "connectivitySource": "explicit",
+      "shapeCount": 1
+    },
+    {
+      "index": 4,
+      "name": "M2",
+      "kind": "metal",
+      "routing": true,
+      "defaultVisible": true,
+      "color": "#3da5ff",
+      "z": 1.0,
+      "height": 0.2,
+      "zBottomUm": 1.0,
+      "zTopUm": 1.2,
+      "thickness": 0.2,
+      "shapeCount": 3
+    },
+    {
+      "index": 5,
+      "name": "V2",
+      "kind": "via",
+      "routing": true,
+      "defaultVisible": true,
+      "color": "#f0f0f0",
+      "z": 1.2,
+      "height": 0.4,
+      "zBottomUm": 1.2,
+      "zTopUm": 1.6,
+      "thickness": 0.4,
+      "lowerLayer": "M2",
+      "upperLayer": "M3",
+      "connectivitySource": "explicit",
+      "shapeCount": 1
+    },
+    {
+      "index": 6,
+      "name": "M3",
+      "kind": "metal",
+      "routing": true,
+      "defaultVisible": true,
+      "color": "#b078ee",
+      "z": 1.6,
+      "height": 0.2,
+      "zBottomUm": 1.6,
+      "zTopUm": 1.8,
+      "thickness": 0.2,
+      "shapeCount": 1
+    }
+  ],
+  "shapes": [
+    {
+      "id": 100,
+      "layer": "M1",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "ROUTE",
+      "hierPath": "TRACE/ROUTE",
+      "net": "",
+      "bbox": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          8,
+          1
+        ]
+      },
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          8,
+          0
+        ],
+        [
+          8,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "id": 103,
+      "layer": "M1",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "ROUTE",
+      "hierPath": "TRACE/ROUTE",
+      "net": "",
+      "bbox": {
+        "min": [
+          7,
+          0
+        ],
+        "max": [
+          8,
+          5
+        ]
+      },
+      "points": [
+        [
+          7,
+          0
+        ],
+        [
+          8,
+          0
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          7,
+          5
+        ]
+      ]
+    },
+    {
+      "id": 106,
+      "layer": "M1",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "ROUTE",
+      "hierPath": "TRACE/ROUTE",
+      "net": "",
+      "bbox": {
+        "min": [
+          7,
+          4
+        ],
+        "max": [
+          15,
+          5
+        ]
+      },
+      "points": [
+        [
+          7,
+          4
+        ],
+        [
+          15,
+          4
+        ],
+        [
+          15,
+          5
+        ],
+        [
+          7,
+          5
+        ]
+      ]
+    },
+    {
+      "id": 109,
+      "layer": "V1",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "ROUTE",
+      "hierPath": "TRACE/ROUTE",
+      "net": "",
+      "bbox": {
+        "min": [
+          7.2,
+          4.2
+        ],
+        "max": [
+          7.8,
+          4.8
+        ]
+      },
+      "points": [
+        [
+          7.2,
+          4.2
+        ],
+        [
+          7.8,
+          4.2
+        ],
+        [
+          7.8,
+          4.8
+        ],
+        [
+          7.2,
+          4.8
+        ]
+      ]
+    },
+    {
+      "id": 112,
+      "layer": "M2",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "ROUTE",
+      "hierPath": "TRACE/ROUTE",
+      "net": "",
+      "bbox": {
+        "min": [
+          7,
+          4
+        ],
+        "max": [
+          8,
+          11
+        ]
+      },
+      "points": [
+        [
+          7,
+          4
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          8,
+          11
+        ],
+        [
+          7,
+          11
+        ]
+      ]
+    },
+    {
+      "id": 115,
+      "layer": "M2",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "ROUTE",
+      "hierPath": "TRACE/ROUTE",
+      "net": "",
+      "bbox": {
+        "min": [
+          7,
+          10
+        ],
+        "max": [
+          15,
+          11
+        ]
+      },
+      "points": [
+        [
+          7,
+          10
+        ],
+        [
+          15,
+          10
+        ],
+        [
+          15,
+          11
+        ],
+        [
+          7,
+          11
+        ]
+      ]
+    },
+    {
+      "id": 118,
+      "layer": "V2",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "ROUTE",
+      "hierPath": "TRACE/ROUTE",
+      "net": "",
+      "bbox": {
+        "min": [
+          14.2,
+          10.2
+        ],
+        "max": [
+          14.8,
+          10.8
+        ]
+      },
+      "points": [
+        [
+          14.2,
+          10.2
+        ],
+        [
+          14.8,
+          10.2
+        ],
+        [
+          14.8,
+          10.8
+        ],
+        [
+          14.2,
+          10.8
+        ]
+      ]
+    },
+    {
+      "id": 121,
+      "layer": "M3",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "ROUTE",
+      "hierPath": "TRACE/ROUTE",
+      "net": "",
+      "bbox": {
+        "min": [
+          14,
+          10
+        ],
+        "max": [
+          15,
+          15
+        ]
+      },
+      "points": [
+        [
+          14,
+          10
+        ],
+        [
+          15,
+          10
+        ],
+        [
+          15,
+          15
+        ],
+        [
+          14,
+          15
+        ]
+      ]
+    },
+    {
+      "id": 124,
+      "layer": "M2",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "CROSSING",
+      "hierPath": "TRACE/CROSSING",
+      "net": "",
+      "bbox": {
+        "min": [
+          3,
+          -2
+        ],
+        "max": [
+          4,
+          4
+        ]
+      },
+      "points": [
+        [
+          3,
+          -2
+        ],
+        [
+          4,
+          -2
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ]
+    },
+    {
+      "id": 127,
+      "layer": "M1",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "GAPS",
+      "hierPath": "TRACE/GAPS",
+      "net": "",
+      "bbox": {
+        "min": [
+          15.2,
+          4
+        ],
+        "max": [
+          18,
+          5
+        ]
+      },
+      "points": [
+        [
+          15.2,
+          4
+        ],
+        [
+          18,
+          4
+        ],
+        [
+          18,
+          5
+        ],
+        [
+          15.2,
+          5
+        ]
+      ]
+    },
+    {
+      "id": 130,
+      "layer": "M1",
+      "purpose": "drawing",
+      "type": "polygon",
+      "ownerCell": "GAPS",
+      "hierPath": "TRACE/GAPS",
+      "net": "",
+      "bbox": {
+        "min": [
+          0,
+          7
+        ],
+        "max": [
+          5,
+          12
+        ]
+      },
+      "points": [
+        [
+          0,
+          7
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          5,
+          12
+        ],
+        [
+          0,
+          12
+        ]
+      ],
+      "holes": [
+        [
+          [
+            1,
+            8
+          ],
+          [
+            4,
+            8
+          ],
+          [
+            4,
+            11
+          ],
+          [
+            1,
+            11
+          ]
+        ]
+      ]
+    },
+    {
+      "id": 133,
+      "layer": "M1",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "GAPS",
+      "hierPath": "TRACE/GAPS",
+      "net": "",
+      "bbox": {
+        "min": [
+          2,
+          9
+        ],
+        "max": [
+          3,
+          10
+        ]
+      },
+      "points": [
+        [
+          2,
+          9
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          2,
+          10
+        ]
+      ]
+    },
+    {
+      "id": 136,
+      "layer": "POLY",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "CONTACT",
+      "hierPath": "TRACE/CONTACT",
+      "net": "",
+      "bbox": {
+        "min": [
+          10,
+          -3
+        ],
+        "max": [
+          15,
+          -2
+        ]
+      },
+      "points": [
+        [
+          10,
+          -3
+        ],
+        [
+          15,
+          -3
+        ],
+        [
+          15,
+          -2
+        ],
+        [
+          10,
+          -2
+        ]
+      ]
+    },
+    {
+      "id": 139,
+      "layer": "CT",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "CONTACT",
+      "hierPath": "TRACE/CONTACT",
+      "net": "",
+      "bbox": {
+        "min": [
+          10.2,
+          -2.8
+        ],
+        "max": [
+          10.8,
+          -2.2
+        ]
+      },
+      "points": [
+        [
+          10.2,
+          -2.8
+        ],
+        [
+          10.8,
+          -2.8
+        ],
+        [
+          10.8,
+          -2.2
+        ],
+        [
+          10.2,
+          -2.2
+        ]
+      ]
+    },
+    {
+      "id": 142,
+      "layer": "M1",
+      "purpose": "drawing",
+      "type": "box",
+      "ownerCell": "CONTACT",
+      "hierPath": "TRACE/CONTACT",
+      "net": "",
+      "bbox": {
+        "min": [
+          10,
+          -3
+        ],
+        "max": [
+          11,
+          1
+        ]
+      },
+      "points": [
+        [
+          10,
+          -3
+        ],
+        [
+          11,
+          -3
+        ],
+        [
+          11,
+          1
+        ],
+        [
+          10,
+          1
+        ]
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": 0,
+      "hierPath": "TRACE/ROUTE",
+      "parentPath": "TRACE",
+      "name": "ROUTE",
+      "master": {
+        "library": "SYNTHETIC",
+        "cell": "ROUTE",
+        "view": "layout"
+      },
+      "worldBBox": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          15,
+          15
+        ]
+      },
+      "bbox": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          15,
+          15
+        ]
+      },
+      "depth": 1
+    },
+    {
+      "id": 1,
+      "hierPath": "TRACE/CROSSING",
+      "parentPath": "TRACE",
+      "name": "CROSSING",
+      "master": {
+        "library": "SYNTHETIC",
+        "cell": "CROSSING",
+        "view": "layout"
+      },
+      "worldBBox": {
+        "min": [
+          3,
+          -2
+        ],
+        "max": [
+          4,
+          4
+        ]
+      },
+      "bbox": {
+        "min": [
+          3,
+          -2
+        ],
+        "max": [
+          4,
+          4
+        ]
+      },
+      "depth": 1
+    },
+    {
+      "id": 2,
+      "hierPath": "TRACE/GAPS",
+      "parentPath": "TRACE",
+      "name": "GAPS",
+      "master": {
+        "library": "SYNTHETIC",
+        "cell": "GAPS",
+        "view": "layout"
+      },
+      "worldBBox": {
+        "min": [
+          0,
+          4
+        ],
+        "max": [
+          18,
+          12
+        ]
+      },
+      "bbox": {
+        "min": [
+          0,
+          4
+        ],
+        "max": [
+          18,
+          12
+        ]
+      },
+      "depth": 1
+    },
+    {
+      "id": 3,
+      "hierPath": "TRACE/CONTACT",
+      "parentPath": "TRACE",
+      "name": "CONTACT",
+      "master": {
+        "library": "SYNTHETIC",
+        "cell": "CONTACT",
+        "view": "layout"
+      },
+      "worldBBox": {
+        "min": [
+          10,
+          -3
+        ],
+        "max": [
+          15,
+          1
+        ]
+      },
+      "bbox": {
+        "min": [
+          10,
+          -3
+        ],
+        "max": [
+          15,
+          1
+        ]
+      },
+      "depth": 1
+    }
+  ],
+  "pins": [
+    {
+      "id": 0,
+      "terminal": "IN",
+      "name": "IN",
+      "net": "",
+      "layer": "M1",
+      "purpose": "pin",
+      "ownerCell": "ROUTE",
+      "hierPath": "TRACE/ROUTE",
+      "worldBBox": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          1,
+          1
+        ]
+      },
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": 1,
+      "terminal": "UP",
+      "name": "UP",
+      "net": "",
+      "layer": "M3",
+      "purpose": "pin",
+      "ownerCell": "ROUTE",
+      "hierPath": "TRACE/ROUTE",
+      "worldBBox": {
+        "min": [
+          14,
+          14
+        ],
+        "max": [
+          15,
+          15
+        ]
+      },
+      "points": [
+        [
+          14,
+          14
+        ],
+        [
+          15,
+          14
+        ],
+        [
+          15,
+          15
+        ],
+        [
+          14,
+          15
+        ]
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": 2,
+      "terminal": "CROSS",
+      "name": "CROSS",
+      "net": "",
+      "layer": "M2",
+      "purpose": "pin",
+      "ownerCell": "CROSSING",
+      "hierPath": "TRACE/CROSSING",
+      "worldBBox": {
+        "min": [
+          3,
+          -2
+        ],
+        "max": [
+          4,
+          -1
+        ]
+      },
+      "points": [
+        [
+          3,
+          -2
+        ],
+        [
+          4,
+          -2
+        ],
+        [
+          4,
+          -1
+        ],
+        [
+          3,
+          -1
+        ]
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": 3,
+      "terminal": "GAP",
+      "name": "GAP",
+      "net": "",
+      "layer": "M1",
+      "purpose": "pin",
+      "ownerCell": "GAPS",
+      "hierPath": "TRACE/GAPS",
+      "worldBBox": {
+        "min": [
+          17,
+          4
+        ],
+        "max": [
+          18,
+          5
+        ]
+      },
+      "points": [
+        [
+          17,
+          4
+        ],
+        [
+          18,
+          4
+        ],
+        [
+          18,
+          5
+        ],
+        [
+          17,
+          5
+        ]
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": 4,
+      "terminal": "FRAME",
+      "name": "FRAME",
+      "net": "",
+      "layer": "M1",
+      "purpose": "pin",
+      "ownerCell": "GAPS",
+      "hierPath": "TRACE/GAPS",
+      "worldBBox": {
+        "min": [
+          0,
+          7
+        ],
+        "max": [
+          1,
+          8
+        ]
+      },
+      "points": [
+        [
+          0,
+          7
+        ],
+        [
+          1,
+          7
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          0,
+          8
+        ]
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": 5,
+      "terminal": "IN_HOLE",
+      "name": "IN_HOLE",
+      "net": "",
+      "layer": "M1",
+      "purpose": "pin",
+      "ownerCell": "GAPS",
+      "hierPath": "TRACE/GAPS",
+      "worldBBox": {
+        "min": [
+          2,
+          9
+        ],
+        "max": [
+          3,
+          10
+        ]
+      },
+      "points": [
+        [
+          2,
+          9
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          2,
+          10
+        ]
+      ],
+      "source": "synthetic"
+    },
+    {
+      "id": 6,
+      "terminal": "POLY_IN",
+      "name": "POLY_IN",
+      "net": "",
+      "layer": "POLY",
+      "purpose": "pin",
+      "ownerCell": "CONTACT",
+      "hierPath": "TRACE/CONTACT",
+      "worldBBox": {
+        "min": [
+          14,
+          -3
+        ],
+        "max": [
+          15,
+          -2
+        ]
+      },
+      "points": [
+        [
+          14,
+          -3
+        ],
+        [
+          15,
+          -3
+        ],
+        [
+          15,
+          -2
+        ],
+        [
+          14,
+          -2
+        ]
+      ],
+      "source": "synthetic"
+    }
+  ],
+  "connections": [],
+  "shapeCount": 15,
+  "instanceCount": 4,
+  "pinCount": 7,
+  "connectionCount": 0,
+  "technology": {
+    "profile": "generic",
+    "source": "synthetic explicit connectivity",
+    "approximate": true
+  },
+  "deviceScopes": {},
+  "deviceMetadataComplete": true,
+  "exportStatus": {
+    "complete": true,
+    "truncated": false
+  },
+  "description": "Entirely synthetic physical-tracing demonstration. All shapes intentionally omit net names. IN reaches M1/V1/M2/V2/M3; CROSS has no via to M1; GAP remains separate; IN_HOLE does not connect to FRAME; POLY_IN reaches M1 only through CT."
+}

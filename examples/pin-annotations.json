@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "library": "SYNTHETIC",
+    "cell": "ANNOTATE",
+    "view": "layout",
+    "geometryDigest": "f6ef7dd197b04ef1e7aeae76cd53efdd0072c9b7754f81f17d530adb49d06519"
+  },
+  "units": "um",
+  "pins": [
+    {
+      "hierPath": "ANNOTATE/ROUTE",
+      "terminal": "A",
+      "name": "A",
+      "layer": "M1",
+      "worldBBox": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "hierPath": "ANNOTATE/ROUTE",
+      "terminal": "A",
+      "name": "A",
+      "layer": "M3",
+      "worldBBox": {
+        "min": [
+          14,
+          14
+        ],
+        "max": [
+          15,
+          15
+        ]
+      }
+    },
+    {
+      "hierPath": "ANNOTATE/CROSSING",
+      "terminal": "A",
+      "name": "A",
+      "layer": "M2",
+      "worldBBox": {
+        "min": [
+          3,
+          -2
+        ],
+        "max": [
+          4,
+          -1
+        ]
+      }
+    }
+  ],
+  "availableHierarchyPaths": [
+    "ANNOTATE",
+    "ANNOTATE/CONTACT",
+    "ANNOTATE/CROSSING",
+    "ANNOTATE/GAPS",
+    "ANNOTATE/ROUTE"
+  ],
+  "availableLayers": [
+    "CT",
+    "M1",
+    "M2",
+    "M3",
+    "POLY",
+    "V1",
+    "V2"
+  ],
+  "existingPinFigures": 0
+}

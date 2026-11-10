@@ -1,0 +1,173 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      browser_smoke:
+        description: Run the optional system-browser smoke test
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vl3d-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node-tests:
+    name: Node ${{ matrix.node }} fast tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install the shared trace worker dependencies
+        run: python3 -m pip install -r requirements-native.txt
+      - run: npm ci --omit=dev
+      - run: npm run test:node
+
+  python-tests:
+    name: Python ${{ matrix.python }} compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.8', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install native test dependencies
+        run: python3 -m pip install -r requirements-native.txt
+      - name: Exercise native compiler, selection and interaction
+        run: python3 -m unittest discover -s tests/native -p 'test_*.py'
+      - run: python3 tests/backend/test_layer_recognition.py
+      - run: python3 tests/backend/test_trace_rules.py
+      - run: python3 tests/backend/test_trace_metadata.py
+      - run: python3 tests/backend/test_pin_annotations.py
+      - run: python3 tools/test_pdk_compat.py
+      - run: python3 tools/test_stream_import.py --preflight-only
+      - name: Exercise the primary GDS/OAS parser
+        if: matrix.python == '3.12'
+        run: |
+          python3 -m pip install 'gdstk>=0.9.37,<1'
+          python3 tests/backend/test_stream_import_gdstk.py
+
+  release-audit:
+    name: Clean source and npm package audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --omit=dev
+      - name: Build staged source release
+        run: npm run release:build -- --output-dir "$RUNNER_TEMP/vl3d-source"
+      - name: Smoke staged release without node_modules
+        run: |
+          test ! -d "$RUNNER_TEMP/vl3d-source/node_modules"
+          cd "$RUNNER_TEMP"
+          ./vl3d-source/bin/vl3d doctor --json --no-oa --port 5177 > "$RUNNER_TEMP/vl3d-doctor.json"
+          node "$RUNNER_TEMP/vl3d-source/tools/server.mjs" \
+            --root "$RUNNER_TEMP/vl3d-source" --host 127.0.0.1 --port 5177 \
+            > "$RUNNER_TEMP/vl3d-release-server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 100); do
+            if curl --fail --silent http://127.0.0.1:5177/public/ >/dev/null; then break; fi
+            sleep 0.1
+          done
+          curl --fail --silent http://127.0.0.1:5177/public/vendor/three.module.min.js >/dev/null
+          curl --fail --silent http://127.0.0.1:5177/public/vendor/three.core.min.js >/dev/null
+      - name: Audit npm pack allowlist
+        run: |
+          npm pack --dry-run --ignore-scripts --json > "$RUNNER_TEMP/npm-pack.json"
+          PACK_REPORT="$RUNNER_TEMP/npm-pack.json" node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const report = JSON.parse(readFileSync(process.env.PACK_REPORT, 'utf8'))[0];
+          const denied = /(^|\/)(public\/data|backups|exports|screenshots|reports|release|dist)(\/|$)|\.bak-|(^|\/)(cds\.lib|lib\.defs|vl3d\.config\.json)$/i;
+          const violations = report.files.map((entry) => entry.path).filter((path) => denied.test(path));
+          if (violations.length) throw new Error(`Forbidden npm paths: ${violations.join(', ')}`);
+          if (report.unpackedSize > 8 * 1024 * 1024) throw new Error(`npm package is unexpectedly large: ${report.unpackedSize}`);
+          process.stdout.write(`npm package: ${report.entryCount} files, ${report.unpackedSize} unpacked bytes\n`);
+          NODE
+
+  browser-smoke:
+    name: Optional system-browser smoke
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_smoke }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -r requirements-native.txt
+      - run: npm ci
+      - name: Verify physical tracing through the real browser UI
+        run: npm run test:trace:browser
+      - name: Verify load and pin user journeys
+        run: npm run test:ux:browser
+      - name: Start isolated viewer
+        run: |
+          mkdir -p "$RUNNER_TEMP/vl3d-data" "$RUNNER_TEMP/vl3d-state"
+          node tools/server.mjs --root . --host 127.0.0.1 --port 5177 \
+            --data-dir "$RUNNER_TEMP/vl3d-data" --state-dir "$RUNNER_TEMP/vl3d-state" \
+            > "$RUNNER_TEMP/vl3d-server.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/vl3d-server.pid"
+          for attempt in $(seq 1 100); do
+            curl --fail --silent http://127.0.0.1:5177/public/ >/dev/null && exit 0
+            sleep 0.1
+          done
+          cat "$RUNNER_TEMP/vl3d-server.log"
+          exit 1
+      - name: Verify shell with preinstalled Chromium
+        run: |
+          node --input-type=module <<'NODE'
+          import { existsSync } from 'node:fs';
+          import { chromium } from 'playwright-core';
+          const executablePath = [process.env.CHROMIUM_BIN, '/usr/bin/google-chrome', '/usr/bin/chromium']
+            .find((candidate) => candidate && existsSync(candidate));
+          if (!executablePath) throw new Error('No preinstalled Chromium executable found');
+          const browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox'] });
+          try {
+            const page = await browser.newPage();
+            const errors = [];
+            page.on('pageerror', (error) => errors.push(error.message));
+            await page.goto('http://127.0.0.1:5177/public/', { waitUntil: 'networkidle' });
+            await page.waitForSelector('canvas');
+            if (!/VL3D/i.test(await page.title())) throw new Error('Unexpected page title');
+            if (errors.length) throw new Error(`Page errors: ${errors.join('; ')}`);
+          } finally {
+            await browser.close();
+          }
+          NODE
+      - name: Stop viewer
+        if: always()
+        run: |
+          test ! -f "$RUNNER_TEMP/vl3d-server.pid" || kill "$(cat "$RUNNER_TEMP/vl3d-server.pid")" 2>/dev/null || true
+          test ! -s "$RUNNER_TEMP/vl3d-server.log" || tail -100 "$RUNNER_TEMP/vl3d-server.log"

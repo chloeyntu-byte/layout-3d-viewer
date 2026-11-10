@@ -1,0 +1,15 @@
+Layout 3D Viewer (VL3D)
+
+Project source and the synthetic examples are distributed under the MIT
+License; see LICENSE. License reference: https://opensource.org/license/mit
+
+The bundled Three.js modules retain their original MIT license and copyright
+notice in public/vendor/THREE-LICENSE.txt. Their pinned version and source are
+recorded in public/vendor/THREE-VERSION.txt.
+
+Python packages and the optional KLayout application are installed separately
+and retain their own licenses. They are not vendored in the source archive.
+
+Cadence/Virtuoso, foundry PDKs, site configuration and real layout data are not
+distributed with VL3D. The bundled profiles are generic or fictional examples;
+provide your own layer profile for a real technology (docs/LAYER_PROFILES.md).

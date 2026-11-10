@@ -1,0 +1,5 @@
+numpy==1.19.5
+ijson==3.2.3
+gdstk==0.9.37
+PyOpenGL==3.1.7
+pyopengltk==0.0.4

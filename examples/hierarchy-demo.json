@@ -1,0 +1,868 @@
+{
+  "schemaVersion": 2,
+  "library": "SYNTHETIC_DEMO",
+  "cell": "DEMO",
+  "view": "layout",
+  "units": "um",
+  "dbuPerMicron": 1000,
+  "bbox": {
+    "min": [
+      0,
+      0
+    ],
+    "max": [
+      24,
+      14
+    ]
+  },
+  "technology": {
+    "profileId": "generic",
+    "geometryApproximate": true
+  },
+  "layers": [
+    {
+      "name": "POLY",
+      "index": 0,
+      "kind": "poly",
+      "semantic": "poly",
+      "routing": true,
+      "defaultVisible": true,
+      "thickness": 0.2,
+      "zBottomUm": 0,
+      "zTopUm": 0.2,
+      "color": "#b6ad85",
+      "geometryApproximate": true
+    },
+    {
+      "name": "CT",
+      "index": 1,
+      "kind": "contact",
+      "semantic": "contact",
+      "routing": true,
+      "defaultVisible": true,
+      "thickness": 0.2,
+      "zBottomUm": 0.2,
+      "zTopUm": 0.4,
+      "color": "#b3babf",
+      "geometryApproximate": true
+    },
+    {
+      "name": "M1",
+      "index": 2,
+      "kind": "metal",
+      "semantic": "metal",
+      "routing": true,
+      "defaultVisible": true,
+      "thickness": 0.29999999999999993,
+      "zBottomUm": 0.4,
+      "zTopUm": 0.7,
+      "color": "#cc9b66",
+      "geometryApproximate": true
+    },
+    {
+      "name": "V1",
+      "index": 3,
+      "kind": "via",
+      "semantic": "via",
+      "routing": true,
+      "defaultVisible": true,
+      "thickness": 0.5,
+      "zBottomUm": 0.7,
+      "zTopUm": 1.2,
+      "color": "#acb9ce",
+      "geometryApproximate": true
+    },
+    {
+      "name": "M2",
+      "index": 4,
+      "kind": "metal",
+      "semantic": "metal",
+      "routing": true,
+      "defaultVisible": true,
+      "thickness": 0.30000000000000004,
+      "zBottomUm": 1.2,
+      "zTopUm": 1.5,
+      "color": "#748daf",
+      "geometryApproximate": true
+    }
+  ],
+  "instances": [
+    {
+      "id": 0,
+      "hierPath": "DEMO/U1",
+      "name": "U1",
+      "parentPath": "DEMO",
+      "master": {
+        "library": "SYNTHETIC_DEMO",
+        "cell": "STAGE",
+        "view": "layout"
+      },
+      "bbox": {
+        "min": [
+          2,
+          2
+        ],
+        "max": [
+          10,
+          12
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "hierPath": "DEMO/U1/M0",
+      "name": "M0",
+      "parentPath": "DEMO/U1",
+      "master": {
+        "library": "SYNTHETIC_DEMO",
+        "cell": "DEVICE",
+        "view": "layout"
+      },
+      "bbox": {
+        "min": [
+          3,
+          3
+        ],
+        "max": [
+          7,
+          7
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "hierPath": "DEMO/U2",
+      "name": "U2",
+      "parentPath": "DEMO",
+      "master": {
+        "library": "SYNTHETIC_DEMO",
+        "cell": "STAGE",
+        "view": "layout"
+      },
+      "bbox": {
+        "min": [
+          15,
+          2
+        ],
+        "max": [
+          23,
+          12
+        ]
+      }
+    }
+  ],
+  "pins": [
+    {
+      "id": 0,
+      "hierPath": "DEMO",
+      "name": "IN",
+      "terminal": "IN",
+      "net": "IN",
+      "layer": "M2",
+      "purpose": "pin",
+      "direction": "inputOutput",
+      "worldBBox": {
+        "min": [
+          0,
+          4.7
+        ],
+        "max": [
+          0.8,
+          5.3
+        ]
+      },
+      "points": [
+        [
+          0,
+          4.7
+        ],
+        [
+          0.8,
+          4.7
+        ],
+        [
+          0.8,
+          5.3
+        ],
+        [
+          0,
+          5.3
+        ]
+      ]
+    },
+    {
+      "id": 1,
+      "hierPath": "DEMO",
+      "name": "OUT",
+      "terminal": "OUT",
+      "net": "OUT",
+      "layer": "M2",
+      "purpose": "pin",
+      "direction": "inputOutput",
+      "worldBBox": {
+        "min": [
+          23.2,
+          9.7
+        ],
+        "max": [
+          24,
+          10.3
+        ]
+      },
+      "points": [
+        [
+          23.2,
+          9.7
+        ],
+        [
+          24,
+          9.7
+        ],
+        [
+          24,
+          10.3
+        ],
+        [
+          23.2,
+          10.3
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "hierPath": "DEMO/U1",
+      "name": "A",
+      "terminal": "A",
+      "net": "A",
+      "layer": "M1",
+      "purpose": "pin",
+      "direction": "inputOutput",
+      "worldBBox": {
+        "min": [
+          4.7,
+          4.7
+        ],
+        "max": [
+          5.3,
+          5.3
+        ]
+      },
+      "points": [
+        [
+          4.7,
+          4.7
+        ],
+        [
+          5.3,
+          4.7
+        ],
+        [
+          5.3,
+          5.3
+        ],
+        [
+          4.7,
+          5.3
+        ]
+      ]
+    },
+    {
+      "id": 3,
+      "hierPath": "DEMO/U1",
+      "name": "Y",
+      "terminal": "Y",
+      "net": "Y",
+      "layer": "M1",
+      "purpose": "pin",
+      "direction": "inputOutput",
+      "worldBBox": {
+        "min": [
+          8,
+          9.7
+        ],
+        "max": [
+          8.6,
+          10.3
+        ]
+      },
+      "points": [
+        [
+          8,
+          9.7
+        ],
+        [
+          8.6,
+          9.7
+        ],
+        [
+          8.6,
+          10.3
+        ],
+        [
+          8,
+          10.3
+        ]
+      ]
+    },
+    {
+      "id": 4,
+      "hierPath": "DEMO/U1/M0",
+      "name": "G",
+      "terminal": "G",
+      "net": "G",
+      "layer": "POLY",
+      "purpose": "pin",
+      "direction": "inputOutput",
+      "worldBBox": {
+        "min": [
+          4.7,
+          4.7
+        ],
+        "max": [
+          5.3,
+          5.3
+        ]
+      },
+      "points": [
+        [
+          4.7,
+          4.7
+        ],
+        [
+          5.3,
+          4.7
+        ],
+        [
+          5.3,
+          5.3
+        ],
+        [
+          4.7,
+          5.3
+        ]
+      ]
+    },
+    {
+      "id": 5,
+      "hierPath": "DEMO/U2",
+      "name": "A",
+      "terminal": "A",
+      "net": "A",
+      "layer": "M1",
+      "purpose": "pin",
+      "direction": "inputOutput",
+      "worldBBox": {
+        "min": [
+          17.7,
+          9.7
+        ],
+        "max": [
+          18.3,
+          10.3
+        ]
+      },
+      "points": [
+        [
+          17.7,
+          9.7
+        ],
+        [
+          18.3,
+          9.7
+        ],
+        [
+          18.3,
+          10.3
+        ],
+        [
+          17.7,
+          10.3
+        ]
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": 0,
+      "parentPath": "DEMO",
+      "parentNet": "IN",
+      "occurrencePath": "DEMO/U1",
+      "terminal": "A",
+      "childFormalNet": "A"
+    },
+    {
+      "id": 1,
+      "parentPath": "DEMO/U1",
+      "parentNet": "A",
+      "occurrencePath": "DEMO/U1/M0",
+      "terminal": "G",
+      "childFormalNet": "G"
+    },
+    {
+      "id": 2,
+      "parentPath": "DEMO",
+      "parentNet": "OUT",
+      "occurrencePath": "DEMO/U1",
+      "terminal": "Y",
+      "childFormalNet": "Y"
+    },
+    {
+      "id": 3,
+      "parentPath": "DEMO",
+      "parentNet": "OUT",
+      "occurrencePath": "DEMO/U2",
+      "terminal": "A",
+      "childFormalNet": "A"
+    }
+  ],
+  "shapes": [
+    {
+      "id": 0,
+      "type": "rect",
+      "layer": "M2",
+      "purpose": "drawing",
+      "hierPath": "DEMO",
+      "ownerCell": "DEMO",
+      "net": "IN",
+      "bbox": {
+        "min": [
+          0,
+          4.7
+        ],
+        "max": [
+          5.5,
+          5.3
+        ]
+      },
+      "points": [
+        [
+          0,
+          4.7
+        ],
+        [
+          5.5,
+          4.7
+        ],
+        [
+          5.5,
+          5.3
+        ],
+        [
+          0,
+          5.3
+        ]
+      ]
+    },
+    {
+      "id": 1,
+      "type": "rect",
+      "layer": "V1",
+      "purpose": "drawing",
+      "hierPath": "DEMO/U1",
+      "ownerCell": "U1",
+      "net": "A",
+      "bbox": {
+        "min": [
+          4.8,
+          4.8
+        ],
+        "max": [
+          5.2,
+          5.2
+        ]
+      },
+      "points": [
+        [
+          4.8,
+          4.8
+        ],
+        [
+          5.2,
+          4.8
+        ],
+        [
+          5.2,
+          5.2
+        ],
+        [
+          4.8,
+          5.2
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "type": "rect",
+      "layer": "M1",
+      "purpose": "drawing",
+      "hierPath": "DEMO/U1",
+      "ownerCell": "U1",
+      "net": "A",
+      "bbox": {
+        "min": [
+          4.7,
+          3
+        ],
+        "max": [
+          5.3,
+          8
+        ]
+      },
+      "points": [
+        [
+          4.7,
+          3
+        ],
+        [
+          5.3,
+          3
+        ],
+        [
+          5.3,
+          8
+        ],
+        [
+          4.7,
+          8
+        ]
+      ]
+    },
+    {
+      "id": 3,
+      "type": "rect",
+      "layer": "CT",
+      "purpose": "drawing",
+      "hierPath": "DEMO/U1/M0",
+      "ownerCell": "M0",
+      "net": "G",
+      "bbox": {
+        "min": [
+          4.8,
+          4.8
+        ],
+        "max": [
+          5.2,
+          5.2
+        ]
+      },
+      "points": [
+        [
+          4.8,
+          4.8
+        ],
+        [
+          5.2,
+          4.8
+        ],
+        [
+          5.2,
+          5.2
+        ],
+        [
+          4.8,
+          5.2
+        ]
+      ]
+    },
+    {
+      "id": 4,
+      "type": "rect",
+      "layer": "POLY",
+      "purpose": "drawing",
+      "hierPath": "DEMO/U1/M0",
+      "ownerCell": "M0",
+      "net": "G",
+      "bbox": {
+        "min": [
+          3,
+          4.7
+        ],
+        "max": [
+          7,
+          5.3
+        ]
+      },
+      "points": [
+        [
+          3,
+          4.7
+        ],
+        [
+          7,
+          4.7
+        ],
+        [
+          7,
+          5.3
+        ],
+        [
+          3,
+          5.3
+        ]
+      ]
+    },
+    {
+      "id": 5,
+      "type": "rect",
+      "layer": "M1",
+      "purpose": "drawing",
+      "hierPath": "DEMO/U1",
+      "ownerCell": "U1",
+      "net": "Y",
+      "bbox": {
+        "min": [
+          8,
+          3
+        ],
+        "max": [
+          8.6,
+          10.3
+        ]
+      },
+      "points": [
+        [
+          8,
+          3
+        ],
+        [
+          8.6,
+          3
+        ],
+        [
+          8.6,
+          10.3
+        ],
+        [
+          8,
+          10.3
+        ]
+      ]
+    },
+    {
+      "id": 6,
+      "type": "rect",
+      "layer": "V1",
+      "purpose": "drawing",
+      "hierPath": "DEMO/U1",
+      "ownerCell": "U1",
+      "net": "Y",
+      "bbox": {
+        "min": [
+          8.1,
+          9.8
+        ],
+        "max": [
+          8.5,
+          10.2
+        ]
+      },
+      "points": [
+        [
+          8.1,
+          9.8
+        ],
+        [
+          8.5,
+          9.8
+        ],
+        [
+          8.5,
+          10.2
+        ],
+        [
+          8.1,
+          10.2
+        ]
+      ]
+    },
+    {
+      "id": 7,
+      "type": "rect",
+      "layer": "M2",
+      "purpose": "drawing",
+      "hierPath": "DEMO",
+      "ownerCell": "DEMO",
+      "net": "OUT",
+      "bbox": {
+        "min": [
+          8,
+          9.7
+        ],
+        "max": [
+          24,
+          10.3
+        ]
+      },
+      "points": [
+        [
+          8,
+          9.7
+        ],
+        [
+          24,
+          9.7
+        ],
+        [
+          24,
+          10.3
+        ],
+        [
+          8,
+          10.3
+        ]
+      ]
+    },
+    {
+      "id": 8,
+      "type": "rect",
+      "layer": "V1",
+      "purpose": "drawing",
+      "hierPath": "DEMO/U2",
+      "ownerCell": "U2",
+      "net": "A",
+      "bbox": {
+        "min": [
+          17.8,
+          9.8
+        ],
+        "max": [
+          18.2,
+          10.2
+        ]
+      },
+      "points": [
+        [
+          17.8,
+          9.8
+        ],
+        [
+          18.2,
+          9.8
+        ],
+        [
+          18.2,
+          10.2
+        ],
+        [
+          17.8,
+          10.2
+        ]
+      ]
+    },
+    {
+      "id": 9,
+      "type": "rect",
+      "layer": "M1",
+      "purpose": "drawing",
+      "hierPath": "DEMO/U2",
+      "ownerCell": "U2",
+      "net": "A",
+      "bbox": {
+        "min": [
+          17.7,
+          3
+        ],
+        "max": [
+          18.3,
+          10.3
+        ]
+      },
+      "points": [
+        [
+          17.7,
+          3
+        ],
+        [
+          18.3,
+          3
+        ],
+        [
+          18.3,
+          10.3
+        ],
+        [
+          17.7,
+          10.3
+        ]
+      ]
+    },
+    {
+      "id": 10,
+      "type": "rect",
+      "layer": "CT",
+      "purpose": "drawing",
+      "hierPath": "DEMO/U2",
+      "ownerCell": "U2",
+      "net": "A",
+      "bbox": {
+        "min": [
+          17.8,
+          4.8
+        ],
+        "max": [
+          18.2,
+          5.2
+        ]
+      },
+      "points": [
+        [
+          17.8,
+          4.8
+        ],
+        [
+          18.2,
+          4.8
+        ],
+        [
+          18.2,
+          5.2
+        ],
+        [
+          17.8,
+          5.2
+        ]
+      ]
+    },
+    {
+      "id": 11,
+      "type": "rect",
+      "layer": "POLY",
+      "purpose": "drawing",
+      "hierPath": "DEMO/U2",
+      "ownerCell": "U2",
+      "net": "A",
+      "bbox": {
+        "min": [
+          16,
+          4.7
+        ],
+        "max": [
+          20,
+          5.3
+        ]
+      },
+      "points": [
+        [
+          16,
+          4.7
+        ],
+        [
+          20,
+          4.7
+        ],
+        [
+          20,
+          5.3
+        ],
+        [
+          16,
+          5.3
+        ]
+      ]
+    }
+  ],
+  "shapeCount": 12,
+  "instanceCount": 3,
+  "pinCount": 6,
+  "connectionCount": 4
+}

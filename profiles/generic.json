@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "id": "generic",
+  "version": 3,
+  "match": {
+    "technologyLibraries": [],
+    "aliases": [],
+    "designLibraries": [],
+    "layerSignatures": []
+  },
+  "preferences": {
+    "metalPrefixes": ["METAL", "M", "MET"],
+    "viaPrefixes": ["VIA", "V"],
+    "contactLayers": ["CONT", "CO", "CONTACT", "CT", "CA"]
+  },
+  "defaults": {
+    "kind": "other",
+    "semantic": "unknown",
+    "routing": false,
+    "defaultVisible": false,
+    "stackIndex": -4.0,
+    "thicknessUm": 0.2,
+    "thicknessSource": "generic-fallback",
+    "approximate": true
+  },
+  "rules": [
+    {
+      "layers": ["DIFF", "DIFFUSION", "OD", "ACTIVE", "ACT", "AA", "RX", "COMP"],
+      "properties": {"kind": "active", "semantic": "active", "routing": false, "defaultVisible": false, "stackIndex": 0.0, "approximate": true}
+    },
+    {
+      "layers": ["POLY1", "POLY2", "POLY_1", "POLY_2", "POLY", "PO", "PO1", "PO2", "GT", "GATE", "PC"],
+      "properties": {"kind": "poly", "semantic": "poly", "routing": true, "defaultVisible": true, "stackIndex": 1.0, "approximate": true}
+    },
+    {
+      "layers": ["CONT", "CONTACT", "CO", "CT", "CA"],
+      "properties": {"kind": "contact", "semantic": "contact", "routing": true, "defaultVisible": true, "stackIndex": 2.0, "thicknessUm": 0.1, "thicknessSource": "generic-fallback", "upperMetal": 1, "lowerLayers": ["DIFF", "OD", "ACTIVE", "ACT", "AA", "RX", "COMP", "POLY1", "POLY", "PO", "GT", "GATE", "PC"], "approximate": true}
+    },
+    {
+      "layers": ["LI"],
+      "properties": {"kind": "metal", "semantic": "local-interconnect", "routing": true, "defaultVisible": true, "stackIndex": 2.5, "metal": 0, "approximate": true}
+    },
+    {
+      "layers": ["RDL"],
+      "properties": {"kind": "metal", "semantic": "redistribution-layer", "routing": true, "defaultVisible": true, "stackIndex": 101.0, "approximate": true}
+    },
+    {
+      "layers": ["SUBSTRATE", "SUB", "PW", "NW", "PWELL", "NWELL", "DNW", "DNWELL", "NWEL", "PWEL"],
+      "suffixes": ["WELL"],
+      "properties": {"kind": "substrate", "semantic": "substrate", "routing": false, "defaultVisible": false, "stackIndex": -4.0, "approximate": false}
+    }
+  ],
+  "auxiliary": {
+    "layers": ["HRP", "MIM", "SAB", "SN", "SP", "NSD", "PSD", "NIMP", "PIMP", "RFDEV", "RFMOSD", "INSTANCE", "HRI", "RPO", "NTN", "NPLUS", "PPLUS", "PRBOUNDARY"],
+    "suffixes": ["TXT", "TEXT", "DUMMY", "DUM", "DMY", "SLOT", "FILL", "MARK", "BOUND", "BORDER", "BOUNDARY", "_PIN", "_LABEL"]
+  }
+}
