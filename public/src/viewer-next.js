@@ -358,6 +358,7 @@ let colorTargetByRecord = new WeakMap();
 let styledColorRecords = new Set();
 let forceFullColorRefresh = true;
 let lastXrayColorMode = false;
+let lastDimColorMode = false;
 let selectedHierarchyPaths = new Set();
 let selectedNetKeys = new Set();
 let selectedPhysicalShapeIndices = new Set();
@@ -1529,6 +1530,7 @@ function clearLayoutScene() {
   styledColorRecords = new Set();
   forceFullColorRefresh = true;
   lastXrayColorMode = false;
+  lastDimColorMode = false;
   lastColorUpdateMs = 0;
   renderedPinMarkerCount = 0;
   selectedRenderRecord = null;
@@ -2187,8 +2189,13 @@ function scheduleLayerTransformPreview() {
 function updateAllColors() {
   const startedAt = performance.now();
   const activeFilter = selectedHierarchyPaths.size > 0 || selectedNetKeys.size > 0 || selectedPhysicalShapeIndices.size > 0 || highlightedMasterKey;
-  const xrayColorMode = Boolean((xrayToggle?.checked || focusDim) && activeFilter);
-  if (forceFullColorRefresh || xrayColorMode || lastXrayColorMode) {
+  const xrayColorMode = Boolean(xrayToggle?.checked && activeFilter);
+  // Focus fade recolours the whole background only when it switches on or off; while it stays on, only
+  // records whose emphasis changes need new colours, so moving between pins stays incremental.
+  const dimColorMode = Boolean(focusDim && activeFilter && !xrayColorMode);
+  const dimChanged = dimColorMode !== lastDimColorMode;
+  lastDimColorMode = dimColorMode;
+  if (forceFullColorRefresh || xrayColorMode || lastXrayColorMode || dimChanged) {
     for (const batch of [...surfaceBatches, ...connectorBatches]) updateBatchColors(batch);
     if (instanceBatch) updateBatchColors(instanceBatch);
     for (const entry of polygonRecords) {
@@ -4306,6 +4313,7 @@ async function activateLayout(rawData, sourceName, generation, startedAt) {
   rebuildPinMarkers();
   forceFullColorRefresh = false;
   lastXrayColorMode = false;
+  lastDimColorMode = false;
   styledColorRecords.clear();
   rebuildGridAndAxes();
   if (controls.autoRotate) beginFastMode();
