@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,6 +34,15 @@ try {
     assert.ok(readFileSync(join(output, 'MANIFEST.sha256'), 'utf8').includes(`  ${file}\n`));
   }
   assert.equal(existsSync(join(output, 'node_modules')), false);
+  // Every browser module that the released code imports must ship with it (missing ones fail at startup).
+  const srcDir = join(output, 'public', 'src');
+  const npmFiles = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).files || [];
+  for (const name of readdirSync(srcDir).filter((file) => file.endsWith('.js'))) {
+    for (const match of readFileSync(join(srcDir, name), 'utf8').matchAll(/from\s+'\.\/([\w.-]+\.js)'/g)) {
+      assert(existsSync(join(srcDir, match[1])), `Release is missing public/src/${match[1]} imported by ${name}`);
+      assert(npmFiles.includes(`public/src/${match[1]}`), `package.json files is missing public/src/${match[1]}`);
+    }
+  }
   const rebuilt = run('--output-dir', output, '--json');
   assert.equal(rebuilt.status, 0, rebuilt.stderr);
   assert.equal(JSON.parse(rebuilt.stdout).archiveSha256, report.archiveSha256, 'Release must be reproducible');

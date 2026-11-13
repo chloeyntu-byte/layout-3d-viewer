@@ -28,7 +28,7 @@ const context = vm.createContext({ hardNonConductiveLayerName, nonConductiveLaye
   fastModeTimer: null, lastFastInteractionAt: 0, fastDraftLayerCount: 0,
   selectedRenderRecord: null, selectedNetKeys: new Set(), currentIndex: {},
   setRoutingSurfaceVisibility() {}, connectorRoot: {}, instanceRoot: {}, pinRoot: {},
-  wireframeToggle: { checked: false }, updatePerformanceInfo() {}, requestRender() {}, syncRenderDPR() {},
+  wireframeToggle: { checked: false }, updatePerformanceInfo() {}, requestRender() {}, syncRenderDPR() {}, setEdgeOpacity() {}, edgeObjects: [], routingToggle: { checked: true },
 });
 vm.runInContext(names.map(actualFunction).join('\n'), context);
 const plain = (value) => JSON.parse(JSON.stringify(value));

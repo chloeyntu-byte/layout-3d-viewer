@@ -26,6 +26,7 @@
     "public/styles.css",
     "public/src/fallback.js",
     "public/src/model.js",
+    "public/src/search-index.js",
     "public/src/viewer-next.js",
     "public/vendor/THREE-LICENSE.txt",
     "public/vendor/THREE-VERSION.txt",

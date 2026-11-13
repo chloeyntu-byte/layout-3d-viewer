@@ -222,12 +222,12 @@ const RENDER_STYLES = {
   metal: {
     label: 'Metal', palette: '', roughnessMetal: 0.46, roughnessOther: 0.66, metalnessMetal: 0.2, metalnessOther: 0.03,
     head: 0.66, hemi: 1.4, ambient: 0.14, key: 2.0, rim: 0.7, exposure: 1.04,
-    edgeOpacity: 0.72, pinBeacon: '#ff4fa3', moduleFrame: '#5eead4', tint: 0x474d4b,
+    edgeOpacity: 0.72, pinBeacon: '#ff4fa3', moduleFrame: '#5eead4', tint: 0x474d4b, pathColor: null, netColor: null,
   },
   studio: {
     label: 'Studio', palette: 'studio', roughnessMetal: 0.86, roughnessOther: 0.92, metalnessMetal: 0.0, metalnessOther: 0.0,
     head: 0.45, hemi: 1.05, ambient: 0.25, key: 0.75, rim: 0.0, exposure: 1.0, toneMapping: 'none',
-    edgeOpacity: 0.26, pinBeacon: '#ff3d8b', moduleFrame: '#ffd23f', tint: 0xffffff,
+    edgeOpacity: 0.26, pinBeacon: '#ff3d8b', moduleFrame: '#2ee6c8', tint: 0xffffff, pathColor: '#2ee6c8', netColor: '#3fd0ff',
   },
 };
 const STYLE_SETTINGS_KEY = 'vl3d.style.v1';
@@ -325,6 +325,8 @@ const surfaceTintColor = new THREE.Color(0x474d4b);
 const selectionNetColor = new THREE.Color(0xffd166);
 const selectionPathColor = new THREE.Color(0x5eead4);
 const exactSelectionColor = new THREE.Color(0xffffff);
+const defaultSelectionNetColor = selectionNetColor.clone();
+const defaultSelectionPathColor = selectionPathColor.clone();
 
 let manifest = null;
 let layoutCatalog = new Map();
@@ -1377,10 +1379,10 @@ function beginFastMode() {
   instanceRoot.visible = false;
   pinRoot.visible = false;
   fastDraftLayerCount = draftLayers.size;
+  setEdgeOpacity(0.9);
   syncRenderDPR();
-  if (wireframeToggle?.checked) {
-    for (const edgeObject of edgeObjects) edgeObject.visible = routingToggle?.checked !== false;
-  }
+  // Draft outlines are the motion preview, so they show even when resting edges are off (Edges = None).
+  for (const edgeObject of edgeObjects) edgeObject.visible = routingToggle?.checked !== false;
   updatePerformanceInfo(true);
   requestRender();
 }
@@ -1559,6 +1561,14 @@ function createSurfaceMaterial(layerName) {
   return material;
 }
 
+// Draft outlines must read clearly while moving, even in styles whose resting edges are faint.
+function setEdgeOpacity(value) {
+  for (const edgeObject of edgeObjects) {
+    if (edgeObject.material?.uniforms?.opacity) edgeObject.material.uniforms.opacity.value = value;
+    else if (edgeObject.material && 'opacity' in edgeObject.material) edgeObject.material.opacity = value;
+  }
+}
+
 function edgeAllowed(edgeObject) {
   const detail = edgeDetailSelect?.value || 'conductors';
   if (detail === 'none') return false;
@@ -1588,6 +1598,9 @@ function applyRenderStyle(name, persist = true) {
   const toneChanged = renderer.toneMapping !== toneMapping;
   renderer.toneMapping = toneMapping;
   surfaceTintColor.set(spec.tint);
+  // Highlight colours must contrast with the style's dominant layer colour (Studio's top metal is yellow).
+  selectionPathColor.copy(spec.pathColor ? new THREE.Color(spec.pathColor) : defaultSelectionPathColor);
+  selectionNetColor.copy(spec.netColor ? new THREE.Color(spec.netColor) : defaultSelectionNetColor);
   for (const material of surfaceMaterials) {
     material.color.copy(surfaceTintColor);
     material.roughness = material.userData.metal ? spec.roughnessMetal : spec.roughnessOther;
@@ -2174,7 +2187,7 @@ function scheduleLayerTransformPreview() {
 function updateAllColors() {
   const startedAt = performance.now();
   const activeFilter = selectedHierarchyPaths.size > 0 || selectedNetKeys.size > 0 || selectedPhysicalShapeIndices.size > 0 || highlightedMasterKey;
-  const xrayColorMode = Boolean(xrayToggle?.checked && activeFilter);
+  const xrayColorMode = Boolean((xrayToggle?.checked || focusDim) && activeFilter);
   if (forceFullColorRefresh || xrayColorMode || lastXrayColorMode) {
     for (const batch of [...surfaceBatches, ...connectorBatches]) updateBatchColors(batch);
     if (instanceBatch) updateBatchColors(instanceBatch);
@@ -3102,6 +3115,7 @@ function restorePreviousView() {
 
 function focusLayoutBBox(bbox, options = {}) {
   if (!bbox || !currentBounds) return;
+  cancelCameraFlight();
   if (options.remember !== false) rememberView();
   const center = boxCenter(bbox), size = boxSize(bbox);
   const localHeight = options.pinLayer ? layerVisualHeight(options.pinLayer) : stackHeight();
@@ -3174,6 +3188,7 @@ function fitCamera(remember = false) {
 }
 
 function resetCamera() {
+  cancelCameraFlight();
   rememberView();
   if (!baseCamera) return fitCamera();
   camera.position.copy(baseCamera.position);
@@ -3185,6 +3200,7 @@ function resetCamera() {
 
 function setViewPreset(preset) {
   if (!currentBounds) return;
+  cancelCameraFlight();
   rememberView();
   const target = controls.target.clone();
   const distance = Math.max(controls.distance, currentBounds.radius * 0.8);
@@ -3202,6 +3218,7 @@ function setViewPreset(preset) {
 }
 
 function panAlongAxis(axis, sign, fast) {
+  cancelCameraFlight();
   if (!currentBounds) return;
   const step = niceStep(currentBounds.radius / 24) * (fast ? 4 : 1);
   const delta = new THREE.Vector3(
@@ -4278,6 +4295,9 @@ async function activateLayout(rawData, sourceName, generation, startedAt) {
     hierarchyDepthInput.value = String(Math.min(currentIndex.maxDepth, 3));
   }
   const buildStartedAt = performance.now();
+  window.clearTimeout(fastModeTimer);
+  fastMode = false;
+  focusDim = false;
   clearLayoutScene();
   buildRoutingGeometry();
   applyAutomaticViaLod();
@@ -4288,6 +4308,7 @@ async function activateLayout(rawData, sourceName, generation, startedAt) {
   lastXrayColorMode = false;
   styledColorRecords.clear();
   rebuildGridAndAxes();
+  if (controls.autoRotate) beginFastMode();
   lastGeometryBuildMs = performance.now() - buildStartedAt;
   lastLoadMs = performance.now() - startedAt;
   updateLayerPanel();
@@ -4527,7 +4548,8 @@ function bindEvents() {
     loadLocalFile(event.dataTransfer?.files?.[0]).catch(handleLoadError);
   });
   window.addEventListener('keydown', (event) => {
-    if (/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName || '')) return;
+    if (event.defaultPrevented) return;
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(event.target?.tagName || '') || /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName || '')) return;
     if (event.code === 'Escape') { clearAllSelection(); return; }
     if (event.code === 'Digit1') setViewPreset('iso');
     else if (event.code === 'Digit2') setViewPreset('top');
@@ -4597,6 +4619,7 @@ function closeFindResults() {
   findActive = -1;
   if (findResults) { findResults.hidden = true; findResults.textContent = ''; }
   findInput?.setAttribute('aria-expanded', 'false');
+  findInput?.removeAttribute('aria-activedescendant');
 }
 
 function renderFindResults() {
@@ -4612,15 +4635,20 @@ function renderFindResults() {
     const row = document.createElement('button');
     row.type = 'button';
     row.className = `find-row kind-${entry.kind}${index === findActive ? ' active' : ''}`;
+    row.id = `find-option-${index}`;
+    row.tabIndex = -1;
     row.setAttribute('role', 'option');
     row.setAttribute('aria-selected', String(index === findActive));
     const detail = entry.detail ? ` · ${entry.kind === 'net' ? `${entry.detail} shapes` : entry.detail}` : '';
     row.innerHTML = `<span class="find-kind">${FIND_KIND_LABEL[entry.kind]}</span><span class="find-name">${escapeHtml(entry.name)}</span><span class="find-scope">${escapeHtml(entry.scope + detail)}</span>`;
-    row.addEventListener('mousedown', (event) => { event.preventDefault(); activateFindEntry(entry); });
+    row.addEventListener('mousedown', (event) => event.preventDefault()); // keep focus in the input
+    row.addEventListener('click', () => activateFindEntry(entry));
     findResults.append(row);
   });
   findResults.hidden = false;
   findInput?.setAttribute('aria-expanded', 'true');
+  if (findActive >= 0) findInput?.setAttribute('aria-activedescendant', `find-option-${findActive}`);
+  else findInput?.removeAttribute('aria-activedescendant');
 }
 
 function updateFindResults() {
@@ -4635,7 +4663,13 @@ function activateFindEntry(entry) {
   closeFindResults();
   focusDim = true;
   if (findInput) findInput.value = entry.name;
+  // A find result is a new focus: drop the previous module/net scope so lists, frames and fades agree.
+  cancelPhysicalTrace(true);
+  selectedNetKeys.clear();
   if (entry.kind === 'pin') {
+    // Pins are listed from selectedInstancePath (set by selectPin); an empty module set avoids tinting the
+    // whole layout when the pin sits at the top level.
+    selectedHierarchyPaths = new Set();
     selectPin(entry.ref);
     focusLayoutBBox(entry.ref.bbox, { pinLayer: entry.ref.layer, animate: true });
   } else if (entry.kind === 'module') {
@@ -4643,6 +4677,7 @@ function activateFindEntry(entry) {
     const instance = currentIndex.instancesByPath.get(entry.ref);
     if (instance?.bbox) focusLayoutBBox(instance.bbox, { animate: true });
   } else if (entry.kind === 'net') {
+    selectedHierarchyPaths.clear();
     traceNet(entry.ref);
     const shapes = currentIndex.shapesByNet.get(entry.ref) || [];
     if (shapes.length) focusLayoutBBox(mergeBBoxes(shapes), { animate: true });
@@ -4664,6 +4699,8 @@ function bindFindBox() {
       event.preventDefault();
       activateFindEntry(findMatches[Math.max(0, findActive)]);
     } else if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
       closeFindResults();
       findInput.blur();
     }
