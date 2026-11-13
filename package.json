@@ -1,6 +1,6 @@
 {
   "name": "layout-3d-viewer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Hierarchy-aware 3D layout viewer for JSON, GDSII, OASIS and (optionally) Virtuoso OA layouts.",
   "type": "module",
   "bin": {
