@@ -11,6 +11,8 @@ Hierarchy-aware 3D viewer for IC layouts: open JSON, GDSII or OASIS files (and, 
 - Opens schema-v2 layout JSON (`.json` / `.json.gz`) and GDSII / OASIS stream files (gdstk first, KLayout as an optional fallback), with an optional layer-map / layer-profile file that you provide.
 - Shows the layout as a rotatable 3D scene with a real perspective camera, a manual Z display scale and fast preview while dragging.
 - Hierarchy explorer: search and highlight instances and masters, per-level pins, per-layer visibility and an Instances / Wires + vias switch.
+- One find box for pins, modules and nets: the camera flies to the match, the rest fades back, a selected pin gets a light column and pulse, a module gets an outline box.
+- *Metal* and *Studio* render styles (Studio is flat and bright, for presentations and light backgrounds); vias draw no outlines by default to keep dense layouts clean.
 - Pin tracing: **Physical geometry** follows touching conductors through declared via endpoints (no net names needed); **Named nets** follows hierarchy-scoped net names. Incomplete or truncated results are labelled as such.
 - Pin labels keep the original name and show layer, figure number and instance path; *Locate pin*, *Fit routes*, *Module* and *Back* are separate view actions.
 - Native Tk/OpenGL desktop client and a browser client (`public/`) that share the same colour palette; screenshots of the 3D view can be saved as PNG or copied to the clipboard (Linux: needs `wl-copy` or `xclip`).

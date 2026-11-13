@@ -11,6 +11,8 @@
 - 打开 schema-v2 版图 JSON（`.json` / `.json.gz`）和 GDSII / OASIS 流文件（优先 gdstk，KLayout 为可选回退），可附带你自己提供的 layer map / layer profile。
 - 可旋转的三维场景：真实透视相机、手动 Z 显示缩放，拖动时使用快速预览。
 - 层级浏览：搜索并高亮 instance 与 master，各层级独立的 pin，按层显示开关，以及 Instances / Wires + vias 总开关。
+- 统一搜索框可找 pin、模块和 net：视角飞到目标，其余几何淡化；选中的 pin 有光柱和脉冲光圈，选中的模块有外框。
+- *Metal* 与 *Studio* 两种渲染风格（Studio 平涂明亮，适合演示和浅色背景）；过孔默认不画边线，密集版图更干净。
 - pin 追踪：**Physical geometry** 按几何接触并经已声明的 via 端点追踪（不需要 net 名）；**Named nets** 按层级作用域内的 net 名追踪。不完整或被截断的结果会明确标注。
 - pin 标签保留原名，并显示层、figure 编号和实例路径；*Locate pin*、*Fit routes*、*Module*、*Back* 是互相独立的视角操作。
 - 原生 Tk/OpenGL 桌面客户端和浏览器客户端（`public/`）使用同一组配色；三维视图截图可保存为 PNG 或复制到剪贴板（Linux 需要 `wl-copy` 或 `xclip`）。

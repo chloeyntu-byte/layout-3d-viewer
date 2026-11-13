@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.1.0 (unreleased)
+
+Browser client.
+
+### Added
+- One find box for pins, modules and nets (`/` to focus, arrow keys and Enter). Results are grouped by kind; choosing one selects it, flies the camera there and fades everything else toward the background.
+- Selected pin: a light column and ring in the scene plus a CSS pulse on screen (three pulses, then a static ring; no extra WebGL frames).
+- Selected modules get an outline box.
+- *Metal / Studio* render style switch. Studio is flat and bright (one luminous top metal, muted lower layers, faint edges) and works with the Dark and Light themes. Switching changes materials, lights and colours only; no geometry is rebuilt.
+- *Edges* control: conductors (default), all including vias, or none.
+
+### Changed
+- Vias and contacts no longer draw outlines by default; they were most of the line aliasing on dense layouts.
+- Fast preview also runs during auto-rotation and camera flights; the drawing buffer drops to 1× while moving and supersamples up to 1.5× (within a pixel budget) when still.
+- The status object and pin label are updated less often while moving; the label HTML is rewritten only when its text changes.
+- *Locate pin* and *Fit routes* animate the camera (reduced-motion users get a jump); Back, Fit and any drag or wheel cancel a flight.
+- Module and net searches in the explorer are labelled "Find submodule" and "Find net by name".
+
 ## 1.0.0
 
 First public release.

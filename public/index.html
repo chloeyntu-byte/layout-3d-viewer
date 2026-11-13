@@ -13,6 +13,7 @@
         <canvas id="scene" aria-label="Interactive 3D layout viewport"></canvas>
         <canvas id="axisOverlay" aria-hidden="true"></canvas>
         <div id="sceneGuide" class="scene-guide"><strong>Open a layout to begin</strong><span>Load a file or OA library, then select a module and one of its pins.</span><button id="openExampleBtn" type="button">Open example</button></div>
+        <div id="pinPulse" class="pin-pulse" hidden aria-hidden="true"><i></i><i></i></div>
         <div id="pinAnnotation" class="pin-annotation" hidden></div>
         <div id="selectionLegend" class="selection-legend" aria-label="Selection legend" hidden><span class="legend-module">▧ Module</span><span class="legend-route">═ Traced route</span><span class="legend-pin">◎ Selected pin</span><span id="hiddenRoutesNote"></span></div>
       </main>
@@ -80,7 +81,17 @@
 
         </div>
 
-        <div class="view-toolbar">          <div class="toolbar-cluster view-cluster" aria-label="View presets">
+        <div class="view-toolbar">
+          <div class="find-box" role="combobox" aria-haspopup="listbox" aria-owns="findResults">
+            <span class="search-icon" aria-hidden="true"></span>
+            <input id="findAll" type="search" placeholder="Find pin, module or net  ( / )" aria-label="Find a pin, module or net" aria-autocomplete="list" aria-controls="findResults" aria-expanded="false" autocomplete="off" spellcheck="false" disabled />
+            <div id="findResults" class="find-results" role="listbox" aria-label="Matches" hidden></div>
+          </div>
+          <div class="toolbar-cluster style-switch" role="group" aria-label="Render style">
+            <button type="button" data-render-style="metal" aria-pressed="true" title="Original metal look">Metal</button>
+            <button type="button" data-render-style="studio" aria-pressed="false" title="Flat, bright look with lighter edges">Studio</button>
+          </div>
+          <div class="toolbar-cluster view-cluster" aria-label="View presets">
             <button id="fitBtn" type="button" title="Fit the whole layout (F)">Fit layout</button>
             <button id="backViewBtn" type="button" title="Restore the view before Locate or Fit" disabled>Back view</button>
             <button id="resetBtn" type="button" title="Reset the camera">Reset</button>
@@ -115,6 +126,15 @@
               <span>X-ray</span>
             </label>
           </div>
+
+          <label class="control select-control edge-control">
+            <span class="control-label">Edges</span>
+            <select id="edgeDetail" title="Which outlines to draw when the view is still; vias and contacts are the densest">
+              <option value="conductors">Conductors</option>
+              <option value="all">All, incl. vias</option>
+              <option value="none">None</option>
+            </select>
+          </label>
 
           <label class="control select-control quality-control">
             <span class="control-label">Quality</span>
@@ -171,7 +191,7 @@
                 <p id="selectionScopeNote" class="list-note">Select an instance to inspect its own pins. Checkboxes add modules.</p>
                 <label class="search-field">
                   <span class="search-icon" aria-hidden="true"></span>
-                  <input id="hierarchySearch" type="search" placeholder="Search instance or master" autocomplete="off" />
+                  <input id="hierarchySearch" type="search" placeholder="Find submodule · instance or master" autocomplete="off" />
                 </label>
                 <label class="range-row compact-range">
                   <span>Depth</span>
@@ -200,7 +220,7 @@
                 </div>
                 <label class="search-field">
                   <span class="search-icon" aria-hidden="true"></span>
-                  <input id="netSearch" type="search" placeholder="Search scoped net" autocomplete="off" />
+                  <input id="netSearch" type="search" placeholder="Find net by name" autocomplete="off" />
                 </label>
                 <div id="netList" class="net-list data-list" role="listbox" aria-label="Nets">
                   <div class="empty-state">Select a module or search for a net.</div>

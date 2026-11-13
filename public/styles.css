@@ -1627,3 +1627,36 @@ body.demo-mode .topbar, body.demo-mode .statusbar { width: auto; inset: auto; tr
 .pin-annotation strong, .selection-section h2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .pin-annotation span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .pin-annotation small { display: block; font-size: 10px; color: var(--muted); }
+
+/* ---- unified find box ---- */
+.find-box { position: relative; display: flex; align-items: center; min-width: 260px; flex: 0 1 340px; }
+.find-box .search-icon { position: absolute; left: 10px; pointer-events: none; }
+.find-box input { width: 100%; height: 34px; padding: 0 12px 0 30px; border-radius: 8px; border: 1.5px solid var(--accent, #ec5aa5); background: var(--surface); color: var(--text); font-size: 13px; }
+.find-box input:focus { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #ec5aa5) 35%, transparent); }
+.find-box input:disabled { opacity: .55; border-color: var(--border, #39413c); }
+.find-results { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; width: max(100%, 420px); max-height: 360px; overflow: auto; padding: 4px; border-radius: 8px; border: 1px solid var(--border, #39413c); background: var(--surface); box-shadow: var(--shadow); }
+.find-row { display: grid; grid-template-columns: 58px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; width: 100%; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.find-row.active, .find-row:hover { background: color-mix(in srgb, var(--accent, #ec5aa5) 16%, transparent); }
+.find-kind { grid-row: span 2; align-self: center; justify-self: start; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.find-row.kind-pin .find-kind { background: #ff3d8b; color: #fff; }
+.find-row.kind-module .find-kind { background: #ffd23f; color: #1c1a10; }
+.find-row.kind-net .find-kind { background: #5eead4; color: #0b2a24; }
+.find-name { font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.find-scope { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.find-empty { padding: 8px; font-size: 12px; color: var(--muted); }
+
+/* ---- render style switch ---- */
+.style-switch { gap: 0; }
+.style-switch button { border-radius: 0; }
+.style-switch button:first-child { border-radius: 6px 0 0 6px; }
+.style-switch button:last-child { border-radius: 0 6px 6px 0; }
+.style-switch button[aria-pressed="true"] { background: var(--text); color: var(--surface); }
+
+/* ---- selected-pin pulse: CSS-only, so it never forces a WebGL redraw ---- */
+.pin-pulse { position: absolute; z-index: 4; width: 0; height: 0; pointer-events: none; }
+.pin-pulse i { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #ff3d8b; box-shadow: 0 0 12px #ff3d8b; opacity: 0; }
+.pin-pulse.run i { animation: vl3d-pin-pulse 1.1s cubic-bezier(.2, .7, .3, 1) 3; }
+.pin-pulse.run i + i { animation-delay: .35s; }
+.pin-pulse:not(.run) i:first-child, .pin-pulse.run i:first-child { opacity: .95; }
+@keyframes vl3d-pin-pulse { 0% { transform: scale(.6); opacity: .95; } 100% { transform: scale(3.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pin-pulse.run i { animation: none; } }

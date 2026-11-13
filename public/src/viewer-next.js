@@ -12,6 +12,7 @@ import {
   splitScopedNetKey,
   traceScopedNets,
 } from './model.js';
+import { buildSearchIndex, querySearchIndex } from './search-index.js';
 
 window.__VL3D_MODULE_STARTED = true;
 window.__VL3D_APP_BOOTING = true;
@@ -43,6 +44,9 @@ const axisOverlay = byId('axisOverlay');
 const viewport = byId('viewport');
 const appElement = byId('app');
 const pinAnnotation = byId('pinAnnotation');
+const pinPulse = byId('pinPulse');
+let pulsePinKey = '';
+let lastAnnotationHtml = '';
 const viewHistory = [];
 let hierarchyRowLimit = 260;
 let loadCandidateKind = '';
@@ -90,6 +94,9 @@ const viaMergeValue = byId('viaMergeValue');
 const fovScale = byId('fovScale');
 const fovValue = byId('fovValue');
 const qualitySelect = byId('qualitySelect');
+const edgeDetailSelect = byId('edgeDetail');
+const findInput = byId('findAll');
+const findResults = byId('findResults');
 const technologyNotice = byId('technologyNotice');
 const stackPositionNotice = byId('stackPositionNotice');
 const navigationModeSelect = byId('navigationModeSelect');
@@ -157,6 +164,15 @@ const LAYER_COLORS = {
 const DEFAULT_PALETTE = 'classic';
 const PALETTE_SETTINGS_KEY = 'vl3d.palette.v2';
 const LAYER_PALETTES = {
+  studio: {
+    METAL9: '#f5c518', METAL8: '#e3a23f', METAL7: '#c98b4a',
+    METAL6: '#7f9fbd', METAL5: '#7091ad', METAL4: '#62819c', METAL3: '#58738b', METAL2: '#50677b', METAL1: '#495c6c',
+    VIA12: '#9aa6ae', VIA23: '#9aa6ae', VIA34: '#9aa6ae', VIA45: '#9aa6ae', VIA56: '#9aa6ae',
+    VIA67: '#a9b2b8', VIA78: '#c3b08c', VIA89: '#d9b25a',
+    CONT: '#8d979d', CO: '#8d979d', POLY: '#d9775c', POLY1: '#d9775c', ACTIVE: '#5aa58f', DIFF: '#5aa58f', OD: '#5aa58f',
+    PAD: '#b9874a', VPAD: '#c99a55', MIM_TOP: '#f1e2b0', MIM_BOT: '#d6be86',
+    NWELL: '#33423d', DNWELL: '#2d3a36', NIMP: '#3a4741', PIMP: '#3f4b44', SALBLK: '#4a4f45',
+  },
   classic: {
     DIFF: '#4cc9a7', ACTIVE: '#4cc9a7', OD: '#4cc9a7',
     POLY: '#f97316', POLY1: '#f97316', CONT: '#f8f0d8', CO: '#f8f0d8',
@@ -198,6 +214,23 @@ const LAYER_PALETTES = {
     VIA45: '#fdba74', VIA56: '#fde68a',
   },
 };
+
+// Render styles. "metal" is the original look; "studio" is a flat, bright look modelled on the
+// Flux cover: one luminous top metal, muted lower layers, faint edges. Both use the same meshes,
+// so switching only touches material uniforms, light intensities and colours (no rebuild, no extra passes).
+const RENDER_STYLES = {
+  metal: {
+    label: 'Metal', palette: '', roughnessMetal: 0.46, roughnessOther: 0.66, metalnessMetal: 0.2, metalnessOther: 0.03,
+    head: 0.66, hemi: 1.4, ambient: 0.14, key: 2.0, rim: 0.7, exposure: 1.04,
+    edgeOpacity: 0.72, pinBeacon: '#ff4fa3', moduleFrame: '#5eead4', tint: 0x474d4b,
+  },
+  studio: {
+    label: 'Studio', palette: 'studio', roughnessMetal: 0.86, roughnessOther: 0.92, metalnessMetal: 0.0, metalnessOther: 0.0,
+    head: 0.45, hemi: 1.05, ambient: 0.25, key: 0.75, rim: 0.0, exposure: 1.0, toneMapping: 'none',
+    edgeOpacity: 0.26, pinBeacon: '#ff3d8b', moduleFrame: '#ffd23f', tint: 0xffffff,
+  },
+};
+const STYLE_SETTINGS_KEY = 'vl3d.style.v1';
 
 const THEMES = {
   dark: {
@@ -270,10 +303,13 @@ const axisRoot = new THREE.Group();
 layoutRoot.add(routingRoot, connectorRoot, instanceRoot, pinRoot);
 scene.add(layoutRoot, gridRoot, axisRoot);
 
-camera.add(new THREE.DirectionalLight(0xffffff, 0.66));
+const headLight = new THREE.DirectionalLight(0xffffff, 0.66);
+camera.add(headLight);
 scene.add(camera);
-scene.add(new THREE.HemisphereLight(0xf8f4e8, 0x303640, 1.4));
-scene.add(new THREE.AmbientLight(0xffffff, 0.14));
+const hemiLight = new THREE.HemisphereLight(0xf8f4e8, 0x303640, 1.4);
+scene.add(hemiLight);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.14);
+scene.add(ambientLight);
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.0);
 keyLight.position.set(30, 60, 26);
 scene.add(keyLight);
@@ -299,6 +335,10 @@ let libraryRecoveryError = null;
 let currentData = null;
 let currentElectricalData = null;
 let currentIndex = null;
+let searchIndex = { entries: [] };
+let renderStyle = 'metal';
+let focusDim = false;
+const focusBackgroundColor = new THREE.Color();
 let currentBounds = null;
 let currentSourceName = '';
 let layerMeta = new Map();
@@ -351,6 +391,7 @@ let lastRenderTriangles = 0;
 let lastRenderMs = 0;
 let lastColorUpdateMs = 0;
 let lastPerformanceUiAt = 0;
+let lastAutoRotateAt = 0;
 let renderSerial = 0;
 let fastDraftLayerCount = 0;
 let lastHierarchyRows = [];
@@ -913,7 +954,12 @@ function paletteLayerKey(layerName, layer = null) {
   return normalized;
 }
 
+function styleSpec() {
+  return RENDER_STYLES[renderStyle] || RENDER_STYLES.metal;
+}
+
 function selectedPaletteName() {
+  if (styleSpec().palette) return styleSpec().palette;
   const requested = paletteSelect?.value || DEFAULT_PALETTE;
   return Object.hasOwn(LAYER_PALETTES, requested) ? requested : DEFAULT_PALETTE;
 }
@@ -1135,6 +1181,7 @@ class SimpleOrbitControls {
   }
 
   onPointerDown(event) {
+    cancelCameraFlight();
     if (event.button !== 0 && event.button !== 2) return;
     if (this.drag) return;
     event.preventDefault();
@@ -1196,6 +1243,7 @@ class SimpleOrbitControls {
   }
 
   onWheel(event) {
+    cancelCameraFlight();
     event.preventDefault();
     this.autoRotate = false;
     const unit = event.deltaMode === 1 ? 16 : (event.deltaMode === 2 ? window.innerHeight : 1);
@@ -1266,14 +1314,27 @@ class SimpleOrbitControls {
 
 const controls = new SimpleOrbitControls(camera, renderer.domElement);
 
+// While moving: at most 1x. At rest: supersample a little (also on 1x screens) within a pixel
+// budget, which is the cheapest anti-aliasing for thin edges because it costs one frame, not every frame.
+const IDLE_PIXEL_BUDGET = 4.2e6;
 function qualityPixelRatio(isFast = fastMode) {
   const deviceRatio = window.devicePixelRatio || 1;
-  if (isFast) return Math.min(deviceRatio, 0.85);
+  if (isFast) return Math.min(deviceRatio, 1);
   const quality = qualitySelect?.value || 'auto';
   if (quality === 'performance' || quality === 'fast') return Math.min(deviceRatio, 1);
-  if (quality === 'balanced') return Math.min(deviceRatio, 1.25);
-  if (quality === 'high' || quality === 'quality') return Math.min(deviceRatio, 2);
-  return Math.min(deviceRatio, deviceRatio > 1.5 ? 1.5 : deviceRatio);
+  const width = Math.max(1, viewport?.clientWidth || window.innerWidth);
+  const height = Math.max(1, viewport?.clientHeight || window.innerHeight);
+  const budget = Math.sqrt(IDLE_PIXEL_BUDGET / (width * height));
+  const wanted = quality === 'balanced' ? Math.max(deviceRatio, 1.25)
+    : (quality === 'high' || quality === 'quality') ? Math.max(deviceRatio * 1.5, 2) : Math.max(deviceRatio, 1.5);
+  return Math.max(1, Math.min(wanted, 2, budget));
+}
+
+function syncRenderDPR() {
+  const next = qualityPixelRatio(fastMode);
+  if (Math.abs(renderer.getPixelRatio() - next) < 0.01) return;
+  renderer.setPixelRatio(next);
+  requestRender();
 }
 
 function setRoutingSurfaceVisibility(visible) {
@@ -1316,6 +1377,7 @@ function beginFastMode() {
   instanceRoot.visible = false;
   pinRoot.visible = false;
   fastDraftLayerCount = draftLayers.size;
+  syncRenderDPR();
   if (wireframeToggle?.checked) {
     for (const edgeObject of edgeObjects) edgeObject.visible = routingToggle?.checked !== false;
   }
@@ -1327,12 +1389,13 @@ function endFastModeSoon(delayMs = 180) {
   window.clearTimeout(fastModeTimer);
   const restoreFullMode = () => {
     const remaining = delayMs - (performance.now() - lastFastInteractionAt);
-    if (remaining > 0 || controls.isInteracting()) {
+    if (remaining > 0 || controls.isInteracting() || controls.autoRotate || flightFrame != null) {
       fastModeTimer = window.setTimeout(restoreFullMode, Math.max(32, remaining));
       return;
     }
     fastMode = false;
     fastDraftLayerCount = 0;
+    syncRenderDPR();
     routingRoot.visible = routingToggle?.checked !== false;
     setRoutingSurfaceVisibility(true);
     connectorRoot.visible = routingToggle?.checked !== false;
@@ -1372,8 +1435,16 @@ function renderFrame() {
   const startedAt = performance.now();
   renderPending = false;
   if (controls.autoRotate) {
-    controls.theta -= controls.autoRotateSpeed * 0.0025;
+    if (!fastMode) beginFastMode();
+    lastFastInteractionAt = performance.now();
+    const now = performance.now();
+    const dt = Math.min(50, lastAutoRotateAt ? now - lastAutoRotateAt : 16);
+    lastAutoRotateAt = now;
+    controls.theta -= controls.autoRotateSpeed * 0.0025 * (dt / 16.7);
     controls.update();
+  } else if (lastAutoRotateAt) {
+    lastAutoRotateAt = 0;
+    if (fastMode) endFastModeSoon(180);
   }
   renderer.render(scene, camera);
   lastRenderCalls = renderer.info.render.calls;
@@ -1468,11 +1539,12 @@ function baseLayerColor(layerName, seed = '', partIndex = 0) {
 
 function createSurfaceMaterial(layerName) {
   const meta = layerMeta.get(normalizedLayerName(layerName)) || {};
+  const spec = styleSpec();
   const material = new THREE.MeshStandardMaterial({
     color: surfaceTintColor,
     vertexColors: false,
-    roughness: meta.kind === 'metal' ? 0.46 : 0.66,
-    metalness: meta.kind === 'metal' ? 0.2 : 0.03,
+    roughness: meta.kind === 'metal' ? spec.roughnessMetal : spec.roughnessOther,
+    metalness: meta.kind === 'metal' ? spec.metalnessMetal : spec.metalnessOther,
     flatShading: true,
     side: THREE.FrontSide,
     transparent: false,
@@ -1482,8 +1554,61 @@ function createSurfaceMaterial(layerName) {
     polygonOffsetFactor: 0.45,
     polygonOffsetUnits: 0.45,
   });
+  material.userData.metal = meta.kind === 'metal';
   surfaceMaterials.add(material);
   return material;
+}
+
+function edgeAllowed(edgeObject) {
+  const detail = edgeDetailSelect?.value || 'conductors';
+  if (detail === 'none') return false;
+  if (detail === 'all') return true;
+  return edgeObject.userData.connector !== true;
+}
+
+function initialRenderStyle() {
+  const requested = params.get('style') || (() => { try { return localStorage.getItem(STYLE_SETTINGS_KEY) || ''; } catch { return ''; } })();
+  return Object.hasOwn(RENDER_STYLES, requested) ? requested : 'metal';
+}
+
+function applyRenderStyle(name, persist = true) {
+  renderStyle = Object.hasOwn(RENDER_STYLES, name) ? name : 'metal';
+  const spec = styleSpec();
+  for (const button of document.querySelectorAll('button[data-render-style]')) {
+    button.setAttribute('aria-pressed', String(button.dataset.renderStyle === renderStyle));
+  }
+  if (paletteSelect) {
+    paletteSelect.disabled = Boolean(spec.palette);
+    paletteSelect.title = spec.palette ? 'Studio style uses its own colours; switch to Metal to choose a palette' : 'Change routing fill colors without changing the UI theme or fast-mode outlines';
+  }
+  headLight.intensity = spec.head; hemiLight.intensity = spec.hemi; ambientLight.intensity = spec.ambient;
+  keyLight.intensity = spec.key; rimLight.intensity = spec.rim; rimLight.visible = spec.rim > 0;
+  renderer.toneMappingExposure = spec.exposure;
+  const toneMapping = spec.toneMapping === 'none' ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+  const toneChanged = renderer.toneMapping !== toneMapping;
+  renderer.toneMapping = toneMapping;
+  surfaceTintColor.set(spec.tint);
+  for (const material of surfaceMaterials) {
+    material.color.copy(surfaceTintColor);
+    material.roughness = material.userData.metal ? spec.roughnessMetal : spec.roughnessOther;
+    material.metalness = material.userData.metal ? spec.metalnessMetal : spec.metalnessOther;
+    if (toneChanged) material.needsUpdate = true;
+  }
+  document.body.dataset.vl3dStyle = renderStyle;
+  if (persist) {
+    try { localStorage.setItem(STYLE_SETTINGS_KEY, renderStyle); } catch {}
+    const url = new URL(window.location.href);
+    url.searchParams.set('style', renderStyle);
+    window.history.replaceState(null, '', url);
+  }
+  if (!currentData) { requestRender(); return; }
+  rebuildLayerMeta();
+  updateLayerPanel();
+  forceFullColorRefresh = true;
+  updateAllColors();
+  updateWireframeVisibility();
+  rebuildPinMarkers();
+  requestRender();
 }
 
 function createEdgeMaterial() {
@@ -1532,6 +1657,8 @@ function styledRecordColor(record, baseColor) {
   temporaryColor.copy(baseColor || record.baseColor || new THREE.Color(0x8ecae6));
   if (xrayToggle?.checked && activeFilter && !pathMatch && !netMatch && !masterMatch) {
     temporaryColor.multiplyScalar(0.2);
+  } else if (focusDim && activeFilter && !pathMatch && !netMatch && !masterMatch) {
+    temporaryColor.lerp(focusBackgroundColor.set(currentTheme().background), 0.62);
   }
   if (masterMatch) temporaryColor.lerp(selectionPathColor, 0.46);
   if (pathMatch) temporaryColor.lerp(selectionPathColor, 0.72);
@@ -1727,6 +1854,7 @@ function createInstancedBatch(records, layerName, matrixForRecord, kind) {
   mesh.computeBoundingSphere();
   mesh.userData = { kind, records };
   const edgeObject = createInstancedEdges(records, matrixForRecord);
+  edgeObject.userData.connector = kind === 'connector-batch';
   const batch = { mesh, edgeObject, records, layer: layerName, matrixForRecord, kind };
   registerBatchColorTargets(batch);
   updateBatchColors(batch);
@@ -2100,7 +2228,9 @@ function updateWireframeVisibility() {
     material.needsUpdate = true;
   }
   for (const edgeObject of edgeObjects) {
-    edgeObject.visible = (fastMode || !wireframe) && routingToggle?.checked !== false;
+    edgeObject.visible = (fastMode || (!wireframe && edgeAllowed(edgeObject))) && routingToggle?.checked !== false;
+    if (edgeObject.material?.uniforms?.opacity) edgeObject.material.uniforms.opacity.value = styleSpec().edgeOpacity;
+    else if (edgeObject.material && 'opacity' in edgeObject.material) edgeObject.material.opacity = styleSpec().edgeOpacity;
     if (edgeObject.material?.uniforms?.multiplier) {
       edgeObject.material.uniforms.multiplier.value = currentTheme().edgeMultiplier;
     }
@@ -2613,9 +2743,66 @@ function rebuildPinMarkers() {
     markers.renderOrder = 1001;
     pinRoot.add(markers);
   }
+  addSelectedPinBeacon();
+  addModuleFrames();
   updatePinAndConnectionLists();
   drawSelectedPinAnnotation();
   requestRender();
+}
+
+// A light column over the selected pin: one static mesh, so it costs nothing per frame.
+function addSelectedPinBeacon() {
+  const pin = selectedRenderRecord?.kind === 'pin' ? selectedRenderRecord.pin : null;
+  if (!pin || !currentBounds) return;
+  const top = pinPosition(pin);
+  const size = boxSize(pin.bbox);
+  const radius = Math.max(Math.min(size.x, size.y) * 0.22, currentBounds.radius * 0.002);
+  const height = Math.max(stackHeight() * 1.6, currentBounds.radius * 0.12);
+  const color = new THREE.Color(styleSpec().pinBeacon);
+  const column = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius, radius, height, 24, 1, true),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.24, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false }),
+  );
+  column.position.set(top.x, top.y + height / 2, top.z);
+  column.renderOrder = 998;
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(radius * 1.25, radius * 1.7, 40),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85, depthTest: false, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }),
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.copy(top);
+  ring.renderOrder = 999;
+  column.userData.pinBeacon = ring.userData.pinBeacon = true;
+  pinRoot.add(column, ring);
+}
+
+// Outline boxes around selected modules (capped) so a found module stands out from the array around it.
+function addModuleFrames() {
+  if (!currentIndex || !selectedHierarchyPaths.size || !currentBounds) return;
+  const vertices = [];
+  const height = stackHeight();
+  let count = 0;
+  for (const path of selectedHierarchyPaths) {
+    if (path === currentIndex.rootPath) continue;
+    const instance = currentIndex.instancesByPath.get(path);
+    if (!instance?.bbox || ++count > 24) continue;
+    const x0 = worldX(instance.bbox.min[0]), x1 = worldX(instance.bbox.max[0]);
+    const z0 = worldZ(instance.bbox.min[1]), z1 = worldZ(instance.bbox.max[1]);
+    const corners = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]];
+    for (const y of [0, height]) {
+      for (let i = 0; i < 4; i += 1) {
+        const a = corners[i], b = corners[(i + 1) % 4];
+        vertices.push(a[0], y, a[1], b[0], y, b[1]);
+      }
+    }
+    for (const c of corners) vertices.push(c[0], 0, c[1], c[0], height, c[1]);
+  }
+  if (!vertices.length) return;
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  const frame = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: styleSpec().moduleFrame, transparent: true, opacity: 0.95, depthTest: false, depthWrite: false, toneMapped: false }));
+  frame.renderOrder = 997;
+  pinRoot.add(frame);
 }
 
 function pinScreenPoint(pin) {
@@ -2644,15 +2831,29 @@ function drawSelectedPinAnnotation() {
   if (!pinAnnotation) return;
   const pin = selectedRenderRecord?.kind === 'pin' ? selectedRenderRecord.pin : null;
   pinAnnotation.hidden = !pin || pinsToggle?.checked === false;
-  if (pinAnnotation.hidden) return;
+  if (pinAnnotation.hidden) { if (pinPulse) pinPulse.hidden = true; pulsePinKey = ''; return; }
   const projected = pinPosition(pin).project(camera);
   const width = viewport.clientWidth, height = viewport.clientHeight;
   const offscreen = Math.abs(projected.x) > 1 || Math.abs(projected.y) > 1 || projected.z < -1 || projected.z > 1;
   const layerHidden = layerVisibility.get(pin.layer) === false || routingToggle?.checked === false;
   pinAnnotation.title = `${pin.terminal}\n${pin.hierPath} · ${pin.layer}`;
-  pinAnnotation.innerHTML = `<strong>Selected pin · ${escapeHtml(pin.terminal)}</strong><span>${escapeHtml(pin.hierPath)} · ${escapeHtml(pin.layer)}${layerHidden ? ' · layer hidden' : ''}${offscreen ? ' · outside view; use Locate pin' : ''}</span>${pin.terminal.length > 70 ? '<small>Long name shortened here · full name in Pins</small>' : ''}`;
+  const annotationHtml = `<strong>Selected pin · ${escapeHtml(pin.terminal)}</strong><span>${escapeHtml(pin.hierPath)} · ${escapeHtml(pin.layer)}${layerHidden ? ' · layer hidden' : ''}${offscreen ? ' · outside view; use Locate pin' : ''}</span>${pin.terminal.length > 70 ? '<small>Long name shortened here · full name in Pins</small>' : ''}`;
+  if (annotationHtml !== lastAnnotationHtml) { pinAnnotation.innerHTML = annotationHtml; lastAnnotationHtml = annotationHtml; }
   pinAnnotation.style.left = `${clamp((projected.x + 1) * width / 2 + 10, 8, Math.max(8, width - Math.min(340, width - 18) - 8))}px`;
   pinAnnotation.style.top = `${clamp((1 - projected.y) * height / 2 - 35, 8, Math.max(8, height - 154))}px`;
+  if (pinPulse) {
+    pinPulse.hidden = offscreen || fastMode;
+    pinPulse.style.left = `${(projected.x + 1) * width / 2}px`;
+    pinPulse.style.top = `${(1 - projected.y) * height / 2}px`;
+    if (pulsePinKey !== pinKeyOf(pin)) {
+      pulsePinKey = pinKeyOf(pin);
+      pinPulse.classList.remove('run'); void pinPulse.offsetWidth; pinPulse.classList.add('run');
+    }
+  }
+}
+
+function pinKeyOf(pin) {
+  return `${pin.hierPath}|${pin.terminal}|${pin.figureIndex ?? ''}`;
 }
 
 function appendPagedRows(container, records, makeRow, emptyMessage, initialCount = 120) {
@@ -2857,6 +3058,7 @@ function updateSelectionLegend() {
 }
 
 function clearAllSelection() {
+  focusDim = false;
   cancelPhysicalTrace(true);
   selectedHierarchyPaths.clear(); selectedNetKeys.clear();
   selectedInstancePath = ''; selectedRenderRecord = null;
@@ -2878,7 +3080,16 @@ function rememberView() {
   if (byId('backViewBtn')) byId('backViewBtn').disabled = false;
 }
 
+function cancelCameraFlight() {
+  if (flightFrame == null) return;
+  cancelAnimationFrame(flightFrame);
+  flightFrame = null;
+  lastPublicStateAt = 0;
+  endFastModeSoon(0);
+}
+
 function restorePreviousView() {
+  cancelCameraFlight();
   const previous = viewHistory.pop();
   if (!previous) return;
   camera.position.copy(previous.position);
@@ -2894,7 +3105,7 @@ function focusLayoutBBox(bbox, options = {}) {
   if (options.remember !== false) rememberView();
   const center = boxCenter(bbox), size = boxSize(bbox);
   const localHeight = options.pinLayer ? layerVisualHeight(options.pinLayer) : stackHeight();
-  const radius = Math.max(Math.hypot(size.x, size.y, localHeight) / 2, currentBounds.radius * (options.pinLayer ? 0.018 : 0.001), 0.001);
+  const radius = Math.max(Math.hypot(size.x, size.y, localHeight) / 2, currentBounds.radius * (options.pinLayer ? 0.07 : 0.001), 0.001);
   const targetY = options.pinLayer ? layerBaseY(options.pinLayer) + localHeight * 0.5 : stackHeight() * 0.5;
   const target = new THREE.Vector3(worldX(center.x), targetY, worldZ(center.y));
   const halfVertical = THREE.MathUtils.degToRad(camera.fov / 2);
@@ -2903,14 +3114,53 @@ function focusLayoutBBox(bbox, options = {}) {
   const direction = camera.position.clone().sub(controls.target);
   if (direction.lengthSq() < 0.000001) direction.set(1, 0.72, 1);
   direction.normalize();
+  const finalDistance = Math.max(distance, radius * 1.2);
+  if (options.animate && !prefersReducedMotion()) {
+    flyCamera(target, finalDistance, direction);
+    return;
+  }
   controls.target.copy(target);
-  controls.distance = Math.max(distance, radius * 1.2);
+  controls.distance = finalDistance;
   camera.position.copy(direction.multiplyScalar(controls.distance).add(target));
   controls.syncFromCamera(); controls.update(); requestRender();
 }
 
+function prefersReducedMotion() {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+}
+
+// Short eased flight (target and distance interpolate together); fast mode keeps each frame light.
+let flightFrame = null;
+function flyCamera(target, distance, direction, durationMs = 520) {
+  if (flightFrame != null) cancelAnimationFrame(flightFrame);
+  const fromTarget = controls.target.clone();
+  const fromDistance = controls.distance;
+  const toTarget = target.clone();
+  const startedAt = performance.now();
+  const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const step = () => {
+    const t = Math.min(1, (performance.now() - startedAt) / durationMs);
+    const k = ease(t);
+    controls.target.lerpVectors(fromTarget, toTarget, k);
+    controls.distance = fromDistance * Math.pow(distance / fromDistance, k);
+    camera.position.copy(direction.clone().multiplyScalar(controls.distance).add(controls.target));
+    controls.syncFromCamera(); controls.update();
+    if (t < 1) {
+      beginFastMode();
+      requestRender();
+      flightFrame = requestAnimationFrame(step);
+    } else {
+      flightFrame = null;
+      endFastModeSoon(60);
+      requestRender();
+    }
+  };
+  flightFrame = requestAnimationFrame(step);
+}
+
 function fitCamera(remember = false) {
   if (!currentBounds) return;
+  cancelCameraFlight();
   if (remember) rememberView();
   focusLayoutBBox({ min: [currentBounds.minX, currentBounds.minY], max: [currentBounds.maxX, currentBounds.maxY] }, { remember: false });
   const distance = controls.distance * (demoMode ? 0.88 : 1.08);
@@ -3020,8 +3270,25 @@ function visibleRecordCount() {
   return total;
 }
 
+let lastPublicStateAt = 0;
+let cachedTraceIndexSource = null;
+let cachedTraceIndexSize = -1;
+let cachedTraceIndices = [];
+function tracedIndexSample() {
+  if (cachedTraceIndexSource !== selectedPhysicalShapeIndices || cachedTraceIndexSize !== selectedPhysicalShapeIndices.size) {
+    cachedTraceIndexSource = selectedPhysicalShapeIndices;
+    cachedTraceIndexSize = selectedPhysicalShapeIndices.size;
+    cachedTraceIndices = [...selectedPhysicalShapeIndices].slice(0, 500);
+  }
+  return cachedTraceIndices;
+}
+
 function updatePublicState() {
   if (!currentData || !currentIndex) return;
+  // During orbit/zoom the state object is rebuilt at most ~7 times a second instead of every frame.
+  const now = performance.now();
+  if (fastMode && now - lastPublicStateAt < 150) return;
+  lastPublicStateAt = now;
   window.__VL3D_STATE = {
     library: currentData.library,
     cell: currentData.cell,
@@ -3044,7 +3311,7 @@ function updatePublicState() {
     physicalTracePending: Boolean(physicalTraceController),
     physicalTraceStatus: physicalTraceResult?.status || '',
     physicalTraceShapes: selectedPhysicalShapeIndices.size,
-    physicalTraceShapeIndices: [...selectedPhysicalShapeIndices].slice(0, 500),
+    physicalTraceShapeIndices: tracedIndexSample(),
     camera: { position: camera.position.toArray(), target: controls.target.toArray() },
     viewport: { width: viewport?.clientWidth || 0, height: viewport?.clientHeight || 0 },
     selectedPin: selectedRenderRecord?.kind === 'pin' ? { terminal: selectedRenderRecord.pin.terminal, hierPath: selectedRenderRecord.pin.hierPath, figureIndex: selectedRenderRecord.pin.figureIndex, bbox: selectedRenderRecord.pin.bbox } : null,
@@ -3997,6 +4264,9 @@ async function activateLayout(rawData, sourceName, generation, startedAt) {
   ]));
   rebuildLayerMeta();
   currentIndex = index;
+  searchIndex = buildSearchIndex(currentIndex);
+  if (findInput) { findInput.disabled = false; findInput.value = ''; }
+  closeFindResults();
   selectedHierarchyPaths = new Set();
   selectedNetKeys = new Set();
   selectedInstancePath = '';
@@ -4233,12 +4503,12 @@ function bindEvents() {
         || (selectedInstancePath === currentIndex.rootPath ? currentData.bbox : null);
       focusLayoutBBox(bbox);
     }
-    else if (action === 'fit-record') focusLayoutBBox(selectedRenderRecord?.bbox, { pinLayer: selectedRenderRecord?.kind === 'pin' ? selectedRenderRecord.layer : null });
+    else if (action === 'fit-record') focusLayoutBBox(selectedRenderRecord?.bbox, { pinLayer: selectedRenderRecord?.kind === 'pin' ? selectedRenderRecord.layer : null, animate: true });
     else if (action === 'trace-record' && physicalMode()) startPhysicalTrace();
     else if (action === 'trace-record' && selectedRenderRecord?.netKey) {
       traceNet(selectedRenderRecord.netKey, false, selectedRenderRecord);
     }
-    else if (action === 'fit-nets') focusLayoutBBox(mergeBBoxes(selectedNetShapes()));
+    else if (action === 'fit-nets') focusLayoutBBox(mergeBBoxes(selectedNetShapes()), { animate: true });
     else if (action === 'clear-selection') clearAllSelection();
   });
   openFileBtn?.addEventListener('click', () => fileInput?.click());
@@ -4317,6 +4587,96 @@ function applyPaletteSelection() {
   updateAllColors();
 }
 
+// ---- Unified find: pins, modules and nets from one box -------------------------------
+let findMatches = [];
+let findActive = -1;
+const FIND_KIND_LABEL = { pin: 'Pin', module: 'Module', net: 'Net' };
+
+function closeFindResults() {
+  findMatches = [];
+  findActive = -1;
+  if (findResults) { findResults.hidden = true; findResults.textContent = ''; }
+  findInput?.setAttribute('aria-expanded', 'false');
+}
+
+function renderFindResults() {
+  if (!findResults) return;
+  findResults.textContent = '';
+  if (!findMatches.length) {
+    const empty = document.createElement('div');
+    empty.className = 'find-empty';
+    empty.textContent = 'No pin, module or net matches';
+    findResults.append(empty);
+  }
+  findMatches.forEach((entry, index) => {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = `find-row kind-${entry.kind}${index === findActive ? ' active' : ''}`;
+    row.setAttribute('role', 'option');
+    row.setAttribute('aria-selected', String(index === findActive));
+    const detail = entry.detail ? ` · ${entry.kind === 'net' ? `${entry.detail} shapes` : entry.detail}` : '';
+    row.innerHTML = `<span class="find-kind">${FIND_KIND_LABEL[entry.kind]}</span><span class="find-name">${escapeHtml(entry.name)}</span><span class="find-scope">${escapeHtml(entry.scope + detail)}</span>`;
+    row.addEventListener('mousedown', (event) => { event.preventDefault(); activateFindEntry(entry); });
+    findResults.append(row);
+  });
+  findResults.hidden = false;
+  findInput?.setAttribute('aria-expanded', 'true');
+}
+
+function updateFindResults() {
+  if (!(findInput?.value || '').trim()) { closeFindResults(); return; }
+  findMatches = querySearchIndex(searchIndex, findInput.value, 6);
+  findActive = findMatches.length ? 0 : -1;
+  renderFindResults();
+}
+
+function activateFindEntry(entry) {
+  if (!entry || !currentIndex) return;
+  closeFindResults();
+  focusDim = true;
+  if (findInput) findInput.value = entry.name;
+  if (entry.kind === 'pin') {
+    selectPin(entry.ref);
+    focusLayoutBBox(entry.ref.bbox, { pinLayer: entry.ref.layer, animate: true });
+  } else if (entry.kind === 'module') {
+    selectInstance(entry.ref, true);
+    const instance = currentIndex.instancesByPath.get(entry.ref);
+    if (instance?.bbox) focusLayoutBBox(instance.bbox, { animate: true });
+  } else if (entry.kind === 'net') {
+    traceNet(entry.ref);
+    const shapes = currentIndex.shapesByNet.get(entry.ref) || [];
+    if (shapes.length) focusLayoutBBox(mergeBBoxes(shapes), { animate: true });
+  }
+}
+
+function bindFindBox() {
+  if (!findInput) return;
+  findInput.addEventListener('input', updateFindResults);
+  findInput.addEventListener('focus', () => { if (findInput.value.trim()) updateFindResults(); });
+  findInput.addEventListener('blur', () => window.setTimeout(closeFindResults, 120));
+  findInput.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (!findMatches.length) return;
+      event.preventDefault();
+      findActive = (findActive + (event.key === 'ArrowDown' ? 1 : -1) + findMatches.length) % findMatches.length;
+      renderFindResults();
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      activateFindEntry(findMatches[Math.max(0, findActive)]);
+    } else if (event.key === 'Escape') {
+      closeFindResults();
+      findInput.blur();
+    }
+  });
+  window.addEventListener('keydown', (event) => {
+    const tag = document.activeElement?.tagName;
+    if (event.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+      event.preventDefault();
+      findInput.focus();
+    }
+  });
+}
+
 async function main() {
   if (!canvas) throw codedError('E9001', 'Missing #scene canvas');
   if (themeSelect) themeSelect.value = params.get('theme') === 'light' ? 'light' : 'dark';
@@ -4332,6 +4692,13 @@ async function main() {
     if (fovValue) fovValue.textContent = `${camera.fov}°`;
   }
   applyTheme();
+  renderStyle = initialRenderStyle();
+  applyRenderStyle(renderStyle, false);
+  for (const button of document.querySelectorAll('button[data-render-style]')) {
+    button.addEventListener('click', () => applyRenderStyle(button.dataset.renderStyle));
+  }
+  edgeDetailSelect?.addEventListener('change', updateWireframeVisibility);
+  bindFindBox();
   syncNavigationControls();
   restoreRememberedSettings();
   bindEvents();
