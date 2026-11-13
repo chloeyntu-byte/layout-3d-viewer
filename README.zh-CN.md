@@ -2,9 +2,11 @@
 
 [English](README.md)
 
-层级感知的 IC 版图三维查看器：打开 JSON、GDSII、OASIS（可选 Virtuoso OA 库），选择模块及其 pin，即可在三维中看到经过 via 连通的金属。MIT 许可，本地运行。
+层级感知的 IC 版图三维查看器：打开 JSON、GDSII、OASIS（可选 Virtuoso OA 库），转过来看平面视图里被遮住的金属，按叠层拆开看过孔，在一个搜索框里找 pin、子模块和 net。MIT 许可，本地运行。
 
-![Layout 3D Viewer：合成八边形电感及一个已追踪的 pin](docs/screenshots/04-trace-result.png)
+![Layout 3D Viewer 旋转一个 LC VCO 版图：移动时画线框，停下恢复实体](docs/screenshots/web-orbit.webp)
+
+*浏览器客户端，Studio 风格，示例为一个 LC VCO 版图（约 12.4 万个图形；库名、器件名和工艺层名已换成通用名）。产品页：[rf-fieldwork.pages.dev/layout](https://rf-fieldwork.pages.dev/layout/)。*
 
 ## 功能
 
@@ -17,6 +19,19 @@
 - pin 标签保留原名，并显示层、figure 编号和实例路径；*Locate pin*、*Fit routes*、*Module*、*Back* 是互相独立的视角操作。
 - 原生 Tk/OpenGL 桌面客户端和浏览器客户端（`public/`）使用同一组配色；三维视图截图可保存为 PNG 或复制到剪贴板（Linux 需要 `wl-copy` 或 `xclip`）。
 - 可选的 OA 流程：选择 OA 库并直接打开 cell（需要你自己的 Cadence 环境，见下）。
+
+## 截图
+
+| | |
+|---|---|
+| ![在搜索框输入 N_G，pin 和 net 分类列出](docs/screenshots/web-find.webp) | ![找到 N_GMD：视角飞到电感腿，光柱标出 pin，其余淡化](docs/screenshots/web-pin.webp) |
+| **统一搜索框**（`/`）：pin、子模块、net 分类列出 | **找到 pin**：视角飞行、光柱与光圈、其余淡化 |
+| ![找到 SW3：开关管画出外框，右侧列出它自己的 pin](docs/screenshots/web-module.webp) | ![从 N_GMD 按物理几何追踪，高亮 3623 个相连图形](docs/screenshots/web-net.webp) |
+| **找到子模块**：外框，检查器列出它自己的 pin | **net / 追踪**：按 net 名，或从 pin 按物理几何 |
+| ![层列表按叠层排序，Z 向间距已拉开](docs/screenshots/web-layers.webp) | ![同一视角的三种外观：Studio 深色、Metal、Studio 浅色](docs/screenshots/web-styles.webp) |
+| **金属叠层**：按工艺顺序排列，逐层开关，Z 向拉伸 | **外观**：Studio（深色 / 浅色）与 Metal |
+
+原生桌面客户端的截图见 `docs/screenshots/01–06`，使用仓库自带的合成示例。
 
 ## 环境要求
 

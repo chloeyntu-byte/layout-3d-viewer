@@ -2,9 +2,11 @@
 
 [中文说明](README.zh-CN.md)
 
-Hierarchy-aware 3D viewer for IC layouts: open JSON, GDSII or OASIS files (and, optionally, Virtuoso OA libraries), pick a module and one of its pins, and follow the connected metal through vias in 3D. MIT licensed, runs locally.
+Hierarchy-aware 3D viewer for IC layouts: open JSON, GDSII or OASIS files (and, optionally, Virtuoso OA libraries), turn the layout to see metal hidden in plan view, split the stack by layer, and find pins, submodules and nets from one search box. MIT licensed, runs locally. Product page: [rf-fieldwork.pages.dev/layout](https://rf-fieldwork.pages.dev/layout/).
 
-![Layout 3D Viewer showing a synthetic octagonal inductor with a traced pin](docs/screenshots/04-trace-result.png)
+![Layout 3D Viewer turning an LC VCO layout: outlines while it moves, solids when it stops](docs/screenshots/web-orbit.webp)
+
+*Browser client, Studio style, on an LC VCO layout (about 124k shapes; library, device and process-layer names made generic).*
 
 ## What it does
 
@@ -17,6 +19,19 @@ Hierarchy-aware 3D viewer for IC layouts: open JSON, GDSII or OASIS files (and, 
 - Pin labels keep the original name and show layer, figure number and instance path; *Locate pin*, *Fit routes*, *Module* and *Back* are separate view actions.
 - Native Tk/OpenGL desktop client and a browser client (`public/`) that share the same colour palette; screenshots of the 3D view can be saved as PNG or copied to the clipboard (Linux: needs `wl-copy` or `xclip`).
 - Optional OA workflow: choose an OA library and open a cell directly (needs your own Cadence environment, see below).
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Typing N_G in the find box lists pins and nets by kind](docs/screenshots/web-find.webp) | ![N_GMD found: the camera flies to the inductor leg, a light column marks the pin and the rest fades](docs/screenshots/web-pin.webp) |
+| **Find box** (`/`): pins, submodules and nets, grouped by kind | **Pin found**: camera flight, light column and ring, focus fade |
+| ![SW3 found: the switch transistor is outlined and its own pins are listed](docs/screenshots/web-module.webp) | ![Physical-geometry trace from N_GMD highlights 3623 connected shapes](docs/screenshots/web-net.webp) |
+| **Submodule found**: outline box, its own pins in the inspector | **Net / trace**: by net name, or by physical geometry from a pin |
+| ![Layer list in stack order with the Z spacing stretched](docs/screenshots/web-layers.webp) | ![One view in three looks: Studio dark, Metal, Studio light](docs/screenshots/web-styles.webp) |
+| **Layer stack**: list in process order, per-layer toggles, Z stretch | **Looks**: Studio (dark / light) and Metal |
+
+The native desktop client is shown in `docs/screenshots/01–06` with the bundled synthetic example.
 
 ## Requirements
 
