@@ -94,8 +94,34 @@ def prepare_runtime():
         except OSError as error:
             _runtime_state['note'] = 'partial: loaded %s; %s failed: %s' % (', '.join(loaded) or 'nothing', soname, error)
             return _runtime_state['note']
+    if loaded:
+        _pin_find_library(loaded)
     _runtime_state['note'] = 'system GL stack loaded: ' + ', '.join(loaded) if loaded else 'no system GL libraries found'
     return _runtime_state['note']
+
+
+_FIND_LIBRARY_NAMES = {'X11': 'libX11.so.6', 'xcb': 'libxcb.so.1', 'GLdispatch': 'libGLdispatch.so.0',
+                       'GLX': 'libGLX.so.0', 'GL': 'libGL.so.1'}
+
+
+def _pin_find_library(loaded):
+    """Make ctypes.util.find_library return sonames for the preloaded libraries.
+
+    conda-forge patches find_library to return absolute paths inside the environment, so
+    pyopengltk's cdll.LoadLibrary(find_library('X11')) would map a second, private libX11. A
+    soname resolves to the copy already loaded with RTLD_GLOBAL. Other names are untouched.
+    """
+    import ctypes.util
+
+    original = ctypes.util.find_library
+    if getattr(original, '_vl3d_pinned', False):
+        return
+    pinned = dict((name, soname) for name, soname in _FIND_LIBRARY_NAMES.items() if soname in loaded)
+
+    def find_library(name):
+        return pinned.get(name) or original(name)
+    find_library._vl3d_pinned = True
+    ctypes.util.find_library = find_library
 
 
 def _mixed_x11():

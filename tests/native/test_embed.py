@@ -156,6 +156,21 @@ class DetectionTest(unittest.TestCase):
             sys.prefix, sys.base_prefix = saved
 
 
+class FindLibraryPinTest(unittest.TestCase):
+    def test_preloaded_names_resolve_to_sonames(self):
+        import ctypes.util
+        saved = ctypes.util.find_library
+        try:
+            ctypes.util.find_library = lambda name: '/opt/conda/lib/lib%s.so.x' % name
+            embed._pin_find_library(['libX11.so.6', 'libGL.so.1'])
+            self.assertEqual(ctypes.util.find_library('X11'), 'libX11.so.6')
+            self.assertEqual(ctypes.util.find_library('GL'), 'libGL.so.1')
+            self.assertEqual(ctypes.util.find_library('xcb'), '/opt/conda/lib/libxcb.so.x')  # not preloaded
+            self.assertEqual(ctypes.util.find_library('png'), '/opt/conda/lib/libpng.so.x')
+        finally:
+            ctypes.util.find_library = saved
+
+
 class RuntimeTest(unittest.TestCase):
     def test_prepare_runtime_reports_status(self):
         note = embed.prepare_runtime()
