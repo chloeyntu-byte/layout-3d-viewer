@@ -50,6 +50,12 @@ class SceneTest(unittest.TestCase):
         self.assertTrue(all(pin['hierPath'] == scene['cell'] for pin in scene['pins']))
         self.assertEqual(scene['bbox'], {'min': [-10.0, -10.0], 'max': [10.0, 6.0]})
 
+    def test_geometry_vias_place_cut_layers_without_technology_vias(self):
+        technology = {'layers': FLUX_LIKE_TECHNOLOGY['layers']}
+        names = [layer['name'] for layer in embed.flux_scene(FLUX_LIKE_RESULT, technology)['layers']]
+        self.assertEqual(names.index('VIA8'), names.index('M8') + 1)
+        self.assertEqual(names.index('M9'), names.index('VIA8') + 1)
+
     def test_unknown_layers_are_appended_not_dropped(self):
         scene = embed.scene_from_geometry([{'layer': 'XYZ', 'bbox': [[0, 0], [1, 1]]}], layers=embed.layer_stack(['M1']))
         self.assertEqual([layer['name'] for layer in scene['layers']], ['M1', 'XYZ'])

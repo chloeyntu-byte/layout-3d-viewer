@@ -402,11 +402,15 @@ def flux_scene(result, technology, thickness=None):
     result      the dict returned by the generator; uses result['geometry'] with 'polygons',
                 'vias' and 'ports' (port 'name', 'layer', 'bbox').
     technology  the generator's technology dict; uses 'layers' (metal names, bottom to top) and
-                'vias' ('lower', 'upper', 'cut_layer').
+                'vias' ('lower', 'upper', 'cut_layer'). When 'vias' is absent (for example a UI copy
+                of the technology), the vias in the geometry, which carry the same three fields,
+                place the cut layers instead.
     """
     geometry = result.get('geometry', result)
     metals = [_text(layer.get('name') if isinstance(layer, dict) else layer) for layer in technology.get('layers') or []]
-    stack = layer_stack(metals, technology.get('vias') or [], thickness=thickness)
+    via_definitions = technology.get('vias') or [via for via in geometry.get('vias') or []
+                                                 if via.get('lower') and via.get('cut_layer')]
+    stack = layer_stack(metals, via_definitions, thickness=thickness)
     pins = [{'name': port.get('name'), 'layer': port.get('layer'), 'bbox': port.get('bbox'), 'points': port.get('points')}
             for port in geometry.get('ports') or []]
     return scene_from_geometry(geometry.get('polygons') or [], pins=pins, vias=geometry.get('vias') or [], layers=stack)
