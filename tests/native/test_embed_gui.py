@@ -9,6 +9,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 from native import embed  # noqa: E402
 
+# Same order a host must follow: before anything imports tkinter (no-op when not needed or too late).
+embed.prepare_runtime()
+
 
 @unittest.skipUnless(os.environ.get('DISPLAY') and embed.available()[0], 'needs an X display with OpenGL')
 class PreviewLifecycleTest(unittest.TestCase):
