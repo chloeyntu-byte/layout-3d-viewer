@@ -19,6 +19,7 @@ embed.prepare_runtime()             # 1. before `import tkinter` anywhere in the
 import tkinter as tk
 
 ok, reason = embed.available()      # 2. False -> keep your 2D view and show `reason`
+                                    #    (Preview3D also sets .ok False if OpenGL setup fails later)
 
 layers = embed.layer_stack(         # 3. bottom-to-top order; cut layers go between their metals
     ['M1', 'M2', 'M3'],
@@ -44,7 +45,7 @@ preview.set_scene(scene)            # 5. call again whenever the geometry change
 | polygon | `layer`, `points` `[[x, y], ...]` or `bbox` `[[x0, y0], [x1, y1]]`, optional `net` | Axis-aligned rectangles are drawn as instanced boxes; anything else is triangulated. Fewer than three points are skipped. |
 | via | `cut_layer` (or `layer`), `bbox` | One block per via array is enough for a preview. |
 | pin | `name`, `layer`, `points` or `bbox` | The label shows the name and the layer; the pin outline is drawn at the top of its layer. |
-| layer | from `layer_stack()`, or dicts with `name`, `kind` (`metal`, `via`, `contact`, `poly`), `thickness`, `routing: True` | Layers that appear in shapes but not in the list are appended on top, so nothing disappears silently. |
+| layer | from `layer_stack()`, or dicts with `name`, `kind` (`metal`, `via`, `contact`, `poly`), `thickness`, `routing: True` | Names are matched case-insensitively. Layers that appear in shapes but not in the list are appended on top, so nothing disappears silently. `layer_stack()` numbers metals by their position in the list (`metal: 1, 2, ...`), not by the digits in their names; the number only decides which metals are "top" for the motion preview. |
 
 The stack order is exact. Heights are illustrative unless you pass real thicknesses: technology databases often do not include them, and the preview does not invent them.
 
@@ -55,19 +56,23 @@ The stack order is exact. Heights are illustrative unless you pass real thicknes
 | Method | Effect |
 |---|---|
 | `set_scene(scene, fit=None, immediate=False)` | Calls within `debounce_ms` (default 120 ms) collapse into one rebuild, so it is safe on every slider move. `fit=None` frames the camera on the first scene and when the outline moves by more than a quarter of its size; otherwise the user's view is kept. |
-| `set_style('metal' \| 'studio')` | Metal is the original look. Studio is flat and bright, with faint edges and no outlines on vias. Switching changes colours and shader constants only. |
+| `set_style('metal' \| 'studio')` | Metal is the original look; in a preview its six metal colours repeat above M6 instead of falling back to one grey. Studio is flat and bright, with faint edges and no outlines on vias. Switching changes colours and shader constants only. |
 | `set_theme('dark' \| 'light')` | Background, grid and label colours. |
 | `set_z_scale(value)` | Display-only vertical stretch, 0.1 to 4. |
 | `show_pins(bool)`, `highlight_pin(name, focus=False)` | Pin labels on or off; mark one pin as current and optionally fly to it. |
 | `fit()`, `clear()`, `capture_png(path)` | Frame everything; empty scene; save the GL view (needs Pillow). |
-| `.ok`, `.reason`, `.view` | Availability; why not; the underlying `LayoutGLView` for advanced use. |
+| `.ok`, `.reason`, `.view` | Availability; why not; the underlying `LayoutGLView` for advanced use. `.ok` turns False, with the message shown in the frame, if the OpenGL context, extensions or shaders fail when the widget is first mapped. |
 
 Mouse: drag to orbit, Shift-drag or right-drag to pan, wheel to zoom. While the camera moves, only the top three metal layers are drawn as outlines; solids return when it stops.
 
 ## Performance
 
-The preview is idle unless the scene or the camera changes; there is no animation loop. A generator structure of a few hundred polygons compiles in under 10 ms and uploads in one idle callback. Build the scene in the Tk thread (it is cheap), or build the dict in a worker and pass it to `set_scene` from the Tk thread; never call widget methods from another thread.
+The preview is idle unless the scene or the camera changes; there is no animation loop. `fit=None` compares each scene with the last one that was framed, so slow parameter sweeps that move the structure step by step still re-frame once the drift passes a quarter of its size. A generator structure of a few hundred polygons compiles in under 10 ms and uploads in one idle callback. Build the scene in the Tk thread (it is cheap), or build the dict in a worker and pass it to `set_scene` from the Tk thread; never call widget methods from another thread.
+
+Polygons and rectangles need numpy only. Shapes of type `path` with a width, or polygons with `holes`, go through the full compiler and need `gdstk`; `scene_from_geometry()` never produces them.
+
+If the host destroys a parent of the preview, pending updates are cancelled automatically.
 
 ## Why `prepare_runtime()`
 
-Pythons that bundle their own `libX11` (conda, miniforge) load it for Tk, while the system OpenGL driver is linked to the system `libX11`. Two copies in one process crash on the first GL call. `prepare_runtime()` loads the system X11/xcb/GL libraries first so Tk reuses them. It does nothing on Pythons without a private `libX11`, on Pythons that ship their own GL driver, outside Linux, or when `VL3D_GL_SYSTEM_LIBS=0`. If tkinter was already imported, it returns `too late: ...` and `available()` reports the problem instead of letting the process crash.
+Pythons that bundle their own `libX11` (conda, miniforge) load it for Tk, while the system OpenGL driver is linked to the system `libX11`. Two copies in one process crash on the first GL call. `prepare_runtime()` loads the system X11/xcb/GL libraries first so Tk reuses them. It does nothing on Pythons without a private `libX11`, on Pythons that ship their own GL driver, outside Linux, or when `VL3D_GL_SYSTEM_LIBS=0`. If tkinter or a private `libX11` was loaded first, it returns `too late: ...`, and `available()` reports the mix (two `libX11` copies, or Tk on the private one while OpenGL would use the system one) instead of letting the process crash. If a system library fails to load, the status says which one (`partial: ...`).

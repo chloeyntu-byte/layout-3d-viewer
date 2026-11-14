@@ -60,17 +60,26 @@ def normalized_layer(value):
     return str(value or '').strip().upper()
 
 
-def palette_color(palette_name, layer, fallback='#8ecae6'):
+def palette_color(palette_name, layer, fallback='#8ecae6', extended=False):
+    """Fill colour for a layer.
+
+    Metal palettes resolve exactly as before (METALn for Mn, otherwise the fallback). With
+    extended=True (embedded previews) or the studio palette, VIA aliases share keys and metal
+    colours repeat every six layers, so tall stacks are not drawn in one grey.
+    """
     palette = PALETTES.get(palette_name) or PALETTES['classic-dark-metal']
     name = normalized_layer(layer)
     if name in palette:
         return palette[name]
+    if not (extended or palette_name == 'studio'):
+        if name.startswith('M') and name[1:].isdigit():
+            return palette.get('METAL' + name[1:], fallback)
+        return fallback
     key = palette_key(name)
     if key in palette:
         return palette[key]
     digits = name[5:] if name.startswith('METAL') else (name[1:] if name.startswith('M') else '')
     if digits.isdigit() and int(digits) > 0:
-        # Six metal colours repeat for thicker stacks, as in the browser client.
         return palette.get('METAL' + digits) or palette.get('METAL%d' % ((int(digits) - 1) % 6 + 1), fallback)
     return fallback
 

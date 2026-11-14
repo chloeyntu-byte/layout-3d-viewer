@@ -127,6 +127,8 @@ class LayoutGLView(OpenGLFrame):
         self._metal_palette_name = 'classic-dark-metal'
         self.pin_paths = None  # None: pins of the selected modules; a list: always show these scopes' pins
         self.compact_pin_labels = False  # True: label detail is the layer name only (embedded previews)
+        self.extended_palette = False  # True: repeat metal colours above M6 and share VIA aliases (previews)
+        self.init_error_callback = None  # called with the error if OpenGL setup fails; otherwise it is raised
         self.theme = 'dark'
         self.resource_mode = 'balanced'
         self.z_scale = 1.0
@@ -199,6 +201,14 @@ class LayoutGLView(OpenGLFrame):
         self.bind('<MouseWheel>', self._mouse_wheel)
 
     def initgl(self):
+        try:
+            self._initgl()
+        except Exception as error:
+            if self.init_error_callback is None:
+                raise
+            self.init_error_callback(error)
+
+    def _initgl(self):
         from OpenGL import GL
         from OpenGL.GL import shaders
         from OpenGL.GL.ARB.draw_instanced import glDrawArraysInstancedARB
@@ -918,7 +928,7 @@ class LayoutGLView(OpenGLFrame):
         layers = self.metadata.get('layers') or []
         layer = layers[layer_id] if 0 <= layer_id < len(layers) else {}
         return rgb(palette_color(
-            self.palette_name, layer.get('name'), layer.get('color') or '#8ecae6'))
+            self.palette_name, layer.get('name'), layer.get('color') or '#8ecae6', extended=self.extended_palette))
 
     def _fast_layers(self):
         layers = self.metadata.get('layers') or []
@@ -1426,6 +1436,9 @@ class LayoutGLView(OpenGLFrame):
 
     def redraw(self):
         from OpenGL import GL
+
+        if not self._gl_ready:
+            return
 
         background = tuple(self._style()['background'][self.theme]) + (1.0,)
         GL.glClearColor(*background)

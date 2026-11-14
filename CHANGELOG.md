@@ -9,7 +9,7 @@
 - `embed.prepare_runtime()` / `available()`: Pythons that bundle their own libX11 (conda) are made to share the system X11/GL stack, and an unsafe mix is reported instead of crashing.
 
 ### Changed
-- Native metal colours repeat every six layers instead of falling back to one grey above M6.
+- Embedded previews (and the Studio palette) repeat metal colours every six layers instead of falling back to one grey above M6; the native client's metal palettes resolve exactly as before.
 - Native GL view: shading constants are per style (uniforms); `load_layout(..., fit=False)` keeps the camera; `set_pin_scope()` shows pins independently of module selection; compact pin labels for previews.
 
 ## 1.1.0 (2026-11-14)

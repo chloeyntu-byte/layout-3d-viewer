@@ -94,8 +94,66 @@ class StyleTest(unittest.TestCase):
         self.assertEqual(palette_key('V2'), 'VIA23')
         self.assertEqual(palette_color('studio', 'M9'), '#f5c518')
         self.assertEqual(palette_color('studio', 'VIA8'), '#d9b25a')
-        # metal colours repeat every six layers instead of falling back to one grey
-        self.assertEqual(palette_color('classic-dark-metal', 'M7'), palette_color('classic-dark-metal', 'M1'))
+        # in previews (extended) metal colours repeat every six layers instead of falling back to one grey
+        self.assertEqual(palette_color('classic-dark-metal', 'M7', extended=True), palette_color('classic-dark-metal', 'M1'))
+
+
+class ReviewRegressionTest(unittest.TestCase):
+    def test_layer_names_are_normalised_and_keep_their_thickness(self):
+        scene = embed.scene_from_geometry([{'layer': 'm1', 'bbox': [[0, 0], [1, 1]]}],
+                                          layers=[{'name': ' m1 ', 'kind': 'metal', 'routing': True, 'thickness': 2.0},
+                                                  {'name': 'M1', 'kind': 'metal', 'routing': True, 'thickness': 9.0}])
+        self.assertEqual([(layer['name'], layer['thickness']) for layer in scene['layers']], [('M1', 2.0)])
+
+    def test_fit_baseline_accumulates_drift(self):
+        preview = embed.Preview3D.__new__(embed.Preview3D)
+        preview._fit_bounds = (0.0, 0.0, 100.0, 100.0)
+        moved = [(10.0 * k, 0.0, 100.0 + 10.0 * k, 100.0) for k in range(1, 11)]
+        decisions = [preview._bounds_changed(bounds) for bounds in moved]
+        self.assertEqual(decisions[:2], [False, False])
+        self.assertTrue(decisions[2])  # 30 um of drift from the framed scene passes the quarter threshold
+
+    def test_metal_palettes_resolve_exactly_as_before(self):
+        self.assertEqual(palette_color('classic-dark-metal', 'M7'), '#8ecae6')
+        self.assertEqual(palette_color('classic-dark-metal', 'VIA1'), '#8ecae6')
+        self.assertEqual(palette_color('classic-dark-metal', 'M2'), '#51cf66')
+        self.assertEqual(palette_color('classic-dark-metal', 'M7', extended=True), palette_color('classic-dark-metal', 'M1'))
+
+
+class DetectionTest(unittest.TestCase):
+    def setUp(self):
+        self._saved = (embed._python_prefixes, embed._loaded_libraries, embed._python_ships)
+
+    def tearDown(self):
+        embed._python_prefixes, embed._loaded_libraries, embed._python_ships = self._saved
+
+    def _fake(self, prefixes, copies, ships=False):
+        embed._python_prefixes = lambda: set(prefixes)
+        embed._loaded_libraries = lambda soname: set(copies)
+        embed._python_ships = lambda soname: ships
+
+    def test_system_python_is_not_mixed(self):
+        self._fake([], ['/usr/lib64/libX11.so.6.3.0'])
+        self.assertFalse(embed._mixed_x11())
+
+    def test_private_x11_is_mixed_unless_python_ships_its_gl(self):
+        self._fake(['/opt/conda'], ['/opt/conda/lib/libX11.so.6.4.0'])
+        self.assertTrue(embed._mixed_x11())
+        self._fake(['/opt/conda'], ['/opt/conda/lib/libX11.so.6.4.0'], ships=True)
+        self.assertFalse(embed._mixed_x11())
+
+    def test_two_copies_are_mixed(self):
+        self._fake(['/opt/conda'], ['/opt/conda/lib/libX11.so.6.4.0', '/usr/lib64/libX11.so.6.3.0'])
+        self.assertTrue(embed._mixed_x11())
+
+    def test_system_prefixes_are_never_private(self):
+        saved = sys.prefix, getattr(sys, 'base_prefix', sys.prefix)
+        try:
+            sys.prefix = sys.base_prefix = '/usr'
+            embed._python_prefixes = self._saved[0]
+            self.assertEqual(embed._python_prefixes(), set())
+        finally:
+            sys.prefix, sys.base_prefix = saved
 
 
 class RuntimeTest(unittest.TestCase):

@@ -31,20 +31,31 @@ _SYSTEM_GL_STACK = ('libX11.so.6', 'libxcb.so.1', 'libGLdispatch.so.0', 'libGLX.
 _runtime_state = {'prepared': False, 'note': ''}
 
 
+_SYSTEM_PREFIXES = ('/usr', '/usr/local', '/')
+
+
 def _python_prefixes():
-    return set(os.path.realpath(p) for p in (sys.prefix, getattr(sys, 'base_prefix', sys.prefix)) if p)
+    """Prefixes of this Python that may hold private copies of system libraries (never /usr)."""
+    prefixes = set(os.path.realpath(p) for p in (sys.prefix, getattr(sys, 'base_prefix', sys.prefix)) if p)
+    return set(p for p in prefixes if p not in _SYSTEM_PREFIXES)
 
 
-def _loaded_library(soname):
+def _loaded_libraries(soname):
+    """Real paths of every mapping of soname in this process."""
+    found = set()
     try:
         with open('/proc/self/maps') as handle:
             for line in handle:
-                path = line.split()[-1] if line.strip() else ''
-                if os.path.basename(path).startswith(soname):
-                    return os.path.realpath(path)
-    except (IOError, OSError, IndexError):
+                parts = line.split()
+                if len(parts) >= 6 and os.path.basename(parts[-1]).startswith(soname):
+                    found.add(os.path.realpath(parts[-1]))
+    except (IOError, OSError):
         pass
-    return ''
+    return found
+
+
+def _is_private(path):
+    return any(path.startswith(prefix + os.sep) for prefix in _python_prefixes())
 
 
 def _python_ships(soname):
@@ -68,8 +79,8 @@ def prepare_runtime():
     if not _python_ships('libX11.so.6') or _python_ships('libGLX_mesa.so.0'):
         _runtime_state['note'] = 'not needed: Python has no private X11, or ships its own GL driver'
         return _runtime_state['note']
-    if '_tkinter' in sys.modules:
-        _runtime_state['note'] = 'too late: tkinter was imported first'
+    if '_tkinter' in sys.modules or any(_is_private(path) for path in _loaded_libraries('libX11.so')):
+        _runtime_state['note'] = 'too late: tkinter or a private libX11 was loaded first'
         return _runtime_state['note']
     import ctypes
     loaded = []
@@ -80,18 +91,21 @@ def prepare_runtime():
         try:
             ctypes.CDLL(path, mode=ctypes.RTLD_GLOBAL)
             loaded.append(soname)
-        except OSError:
-            break
+        except OSError as error:
+            _runtime_state['note'] = 'partial: loaded %s; %s failed: %s' % (', '.join(loaded) or 'nothing', soname, error)
+            return _runtime_state['note']
     _runtime_state['note'] = 'system GL stack loaded: ' + ', '.join(loaded) if loaded else 'no system GL libraries found'
     return _runtime_state['note']
 
 
 def _mixed_x11():
-    """True when Tk's libX11 comes from the Python prefix but the GL driver would be the system one."""
-    x11 = _loaded_library('libX11.so')
-    if not x11 or _python_ships('libGLX_mesa.so.0'):
+    """True when two libX11 copies are mapped, or Tk's comes from the Python prefix while GL would be the system one."""
+    copies = _loaded_libraries('libX11.so')
+    if len(copies) > 1:
+        return True
+    if not copies or _python_ships('libGLX_mesa.so.0'):
         return False
-    return any(x11.startswith(prefix + os.sep) for prefix in _python_prefixes())
+    return any(_is_private(path) for path in copies)
 
 
 def available():
@@ -221,8 +235,14 @@ def scene_from_geometry(polygons, pins=(), vias=(), layers=None, cell=SCENE_ROOT
                             'points': [list(p) for p in points], 'bbox': box, 'worldBBox': box,
                             'figureIndex': 0, 'purpose': 'pin'})
         all_points.extend(points)
-    stack = [dict(layer) for layer in (layers or [])]
-    known = set(layer['name'] for layer in stack)
+    stack = []
+    known = set()
+    for layer in layers or []:
+        entry = dict(layer)
+        entry['name'] = _text(entry.get('name')).upper()
+        if entry['name'] and entry['name'] not in known:
+            known.add(entry['name'])
+            stack.append(entry)
     for shape in shapes:
         if shape['layer'] not in known:
             known.add(shape['layer'])
@@ -263,15 +283,19 @@ class Preview3D(object):
         self._debounce_ms = max(0, int(debounce_ms))
         self._show_pins = bool(show_pins)
         self._on_pin_click = on_pin_click
+        self._fit_bounds = None
+        self._destroyed = False
+        self.frame.bind('<Destroy>', self._frame_destroyed, add='+')
         if not self.ok:
-            tk.Label(self.frame, text='3D preview unavailable: %s' % self.reason, anchor='w', justify='left',
-                     wraplength=420).pack(fill='both', expand=True, padx=12, pady=12)
+            self._show_unavailable()
             return
         from .gl_view import LayoutGLView
         self.view = LayoutGLView(self.frame)
+        self.view.init_error_callback = self._gl_failed
         self.view.pack(fill='both', expand=True)
         self.view.pin_selected_callback = self._pin_clicked
         self.view.compact_pin_labels = True
+        self.view.extended_palette = True  # previews: metal colours repeat above M6 instead of one grey
         self.set_style(style)
         self.set_theme(theme)
         self.set_z_scale(z_scale)
@@ -286,13 +310,45 @@ class Preview3D(object):
     def place(self, *args, **kwargs):
         return self.frame.place(*args, **kwargs)
 
-    def destroy(self):
+    def _show_unavailable(self):
+        _tk().Label(self.frame, text='3D preview unavailable: %s' % self.reason, anchor='w', justify='left',
+                    wraplength=420).pack(fill='both', expand=True, padx=12, pady=12)
+
+    def _gl_failed(self, error):
+        """OpenGL context, extension or shader setup failed: degrade to the message, like available() == False."""
+        self.ok, self.reason = False, str(error)
+        self._cancel_pending()
+        view, self.view = self.view, None
+
+        def replace():
+            # Deferred: this runs inside the view's own map callback, which must return first.
+            if view is not None:
+                try:
+                    view.destroy()
+                except Exception:
+                    pass
+            if not self._destroyed:
+                self._show_unavailable()
+        self.frame.after_idle(replace)
+
+    def _cancel_pending(self):
+        self._pending = None
         if self._after is not None:
             try:
                 self.frame.after_cancel(self._after)
             except Exception:
                 pass
             self._after = None
+
+    def _frame_destroyed(self, event):
+        # Also fires when the host destroys a parent: Tk then never calls our destroy().
+        if event.widget is self.frame:
+            self._destroyed = True
+            self._cancel_pending()
+
+    def destroy(self):
+        self._cancel_pending()
+        self._destroyed = True
         self.frame.destroy()
 
     # --- scene
@@ -303,7 +359,7 @@ class Preview3D(object):
         move. fit=None fits the camera on the first scene and when the outline changes a lot, and
         otherwise keeps the user's view.
         """
-        if not self.ok:
+        if not self.ok or self._destroyed:
             return
         self._pending = scene
         self._pending_fit = fit
@@ -321,22 +377,24 @@ class Preview3D(object):
         self._after = None
         scene, fit = self._pending, self._pending_fit
         self._pending = None
-        if scene is None:
+        if scene is None or self._destroyed or self.view is None:
             return
         compiled = compile_scene(scene)
         box = compiled.metadata.get('bbox') or {}
         bounds = tuple(box.get('min', [0, 0])) + tuple(box.get('max', [0, 0]))
         if fit is None:
             fit = not self._has_scene or self._bounds_changed(bounds)
+        if fit:
+            self._fit_bounds = bounds  # compare later scenes with the last framed one, so drift accumulates
         self._bounds = bounds
         self._has_scene = True
         self.view.pin_paths = [compiled.metadata.get('cell') or SCENE_ROOT] if self._show_pins else []
         self.view.load_layout(compiled, fit=bool(fit))
 
     def _bounds_changed(self, bounds):
-        if not self._bounds:
+        if not self._fit_bounds:
             return True
-        old = self._bounds
+        old = self._fit_bounds
         span = max(old[2] - old[0], old[3] - old[1], 1e-9)
         return max(abs(a - b) for a, b in zip(old, bounds)) > 0.25 * span
 
@@ -361,6 +419,7 @@ class Preview3D(object):
     def fit(self):
         if self.view is not None:
             self.view.fit_layout()
+            self._fit_bounds = self._bounds
 
     def show_pins(self, visible=True):
         self._show_pins = bool(visible)
@@ -386,6 +445,8 @@ class Preview3D(object):
         """Save the current view as PNG (needs Pillow). Returns the path."""
         from PIL import Image
 
+        if self.view is None:
+            raise RuntimeError('3D preview unavailable: %s' % self.reason)
         width, height, data = self.view.capture_rgb()
         Image.frombytes('RGB', (width, height), data).save(path)
         return path
