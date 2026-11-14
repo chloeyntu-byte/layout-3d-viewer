@@ -18,6 +18,7 @@
 - pin 追踪：**Physical geometry** 按几何接触并经已声明的 via 端点追踪（不需要 net 名）；**Named nets** 按层级作用域内的 net 名追踪。不完整或被截断的结果会明确标注。
 - pin 标签保留原名，并显示层、figure 编号和实例路径；*Locate pin*、*Fit routes*、*Module*、*Back* 是互相独立的视角操作。
 - 原生 Tk/OpenGL 桌面客户端和浏览器客户端（`public/`）使用同一组配色；三维视图截图可保存为 PNG 或复制到剪贴板（Linux 需要 `wl-copy` 或 `xclip`）。
+- 可嵌入其他 Tk 程序的三维预览（输入多边形、过孔和 pin，输出带 pin 标签的三维视图），见 [docs/EMBEDDING.md](docs/EMBEDDING.md)。
 - 可选的 OA 流程：选择 OA 库并直接打开 cell（需要你自己的 Cadence 环境，见下）。
 
 ## 截图

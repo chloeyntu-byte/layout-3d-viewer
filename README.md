@@ -18,6 +18,7 @@ Hierarchy-aware 3D viewer for IC layouts: open JSON, GDSII or OASIS files (and, 
 - Pin tracing: **Physical geometry** follows touching conductors through declared via endpoints (no net names needed); **Named nets** follows hierarchy-scoped net names. Incomplete or truncated results are labelled as such.
 - Pin labels keep the original name and show layer, figure number and instance path; *Locate pin*, *Fit routes*, *Module* and *Back* are separate view actions.
 - Native Tk/OpenGL desktop client and a browser client (`public/`) that share the same colour palette; screenshots of the 3D view can be saved as PNG or copied to the clipboard (Linux: needs `wl-copy` or `xclip`).
+- Embeddable 3D preview for other Tk programs (polygons, vias and pins in; 3D with pin labels out): see [docs/EMBEDDING.md](docs/EMBEDDING.md).
 - Optional OA workflow: choose an OA library and open a cell directly (needs your own Cadence environment, see below).
 
 ## Screenshots

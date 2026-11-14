@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0 (unreleased)
+
+### Added
+- Embeddable 3D preview for other Tk programs (`native/embed.py`, `docs/EMBEDDING.md`, `examples/embed_preview.py`): polygons, vias and pins in, a 3D view with pin labels out. Debounced scene updates keep the user's camera; Metal/Studio styles and Dark/Light themes; `flux_scene()` adapter for generator results.
+- `compile_scene()` compiles an in-memory layout dict without files or cache.
+- Native client: *Studio (flat, bright)* render style in the palette list, matching the browser client.
+- `embed.prepare_runtime()` / `available()`: Pythons that bundle their own libX11 (conda) are made to share the system X11/GL stack, and an unsafe mix is reported instead of crashing.
+
+### Changed
+- Native metal colours repeat every six layers instead of falling back to one grey above M6.
+- Native GL view: shading constants are per style (uniforms); `load_layout(..., fit=False)` keeps the camera; `set_pin_scope()` shows pins independently of module selection; compact pin labels for previews.
+
 ## 1.1.0 (2026-11-14)
 
 Browser client.

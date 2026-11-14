@@ -6,7 +6,7 @@ import time
 
 from .errors import Vl3dError
 from .navigation import CameraState, PointerStateMachine
-from .palettes import palette_color, rgb
+from .palettes import STYLES, palette_color, rgb, style_for_palette
 from .pin_presentation import pin_annotations, pin_bounds, place_labels
 from .selection import connected_net_keys, hierarchy_ids, net_ids, outline_indices, physical_shape_rows, selected_pins
 
@@ -124,6 +124,9 @@ class LayoutGLView(OpenGLFrame):
         self.metadata = {}
         self.arrays = {}
         self.palette_name = 'classic-dark-metal'
+        self._metal_palette_name = 'classic-dark-metal'
+        self.pin_paths = None  # None: pins of the selected modules; a list: always show these scopes' pins
+        self.compact_pin_labels = False  # True: label detail is the layer name only (embedded previews)
         self.theme = 'dark'
         self.resource_mode = 'balanced'
         self.z_scale = 1.0
@@ -220,6 +223,7 @@ class LayoutGLView(OpenGLFrame):
             attribute vec2 aHeight;
             uniform float uZScale;
             uniform float uOutline;
+            uniform vec2 uShade;
             varying float vShade;
             void main() {
                 vec3 unit = gl_Vertex.xyz;
@@ -231,17 +235,19 @@ class LayoutGLView(OpenGLFrame):
                 gl_Position = gl_ModelViewProjectionMatrix * vec4(world, 1.0);
                 vec3 normal = normalize(gl_NormalMatrix * vec3(gl_Normal.xy, -gl_Normal.z));
                 float diffuse = max(dot(normal, normalize(vec3(0.32, 0.82, 0.46))), 0.0);
-                vShade = mix(0.36 + diffuse * 0.55, 1.0, uOutline);
+                vShade = mix(uShade.x + diffuse * uShade.y, 1.0, uOutline);
             }
         '''
         fragment_source = r'''
             #version 120
             uniform vec3 uColor;
             uniform float uOutline;
+            uniform vec3 uFillGain;
+            uniform vec3 uFillBias;
             varying float vShade;
             void main() {
                 vec3 metallic = uColor * vShade;
-                vec3 fill = metallic * vec3(0.38, 0.41, 0.40) + vec3(0.018, 0.022, 0.022);
+                vec3 fill = metallic * uFillGain + uFillBias;
                 gl_FragColor = vec4(mix(fill, uColor, uOutline), 1.0);
             }
         '''
@@ -263,11 +269,14 @@ class LayoutGLView(OpenGLFrame):
             #version 120
             uniform vec3 uColor;
             uniform float uOutline;
+            uniform vec2 uShade;
+            uniform vec3 uFillGain;
+            uniform vec3 uFillBias;
             varying vec3 vEyePosition;
             void main() {
                 vec3 normal = normalize(cross(dFdx(vEyePosition), dFdy(vEyePosition)));
                 float diffuse = max(dot(normal, normalize(vec3(0.32, 0.82, 0.46))), 0.0);
-                vec3 fill = uColor * (0.36 + diffuse * 0.55) * vec3(0.38, 0.41, 0.40) + vec3(0.018, 0.022, 0.022);
+                vec3 fill = uColor * (uShade.x + diffuse * uShade.y) * uFillGain + uFillBias;
                 gl_FragColor = vec4(mix(fill, uColor, uOutline), 1.0);
             }
         '''
@@ -278,6 +287,10 @@ class LayoutGLView(OpenGLFrame):
         self._polygon_z_location = GL.glGetUniformLocation(self._polygon_shader, 'uZScale')
         self._polygon_color_location = GL.glGetUniformLocation(self._polygon_shader, 'uColor')
         self._polygon_outline_location = GL.glGetUniformLocation(self._polygon_shader, 'uOutline')
+        self._style_locations = {}
+        for program in (self._shader, self._polygon_shader):
+            self._style_locations[program] = tuple(
+                GL.glGetUniformLocation(program, name) for name in ('uShade', 'uFillGain', 'uFillBias'))
         self._rect_location = GL.glGetAttribLocation(self._shader, 'aRect')
         self._height_location = GL.glGetAttribLocation(self._shader, 'aHeight')
         self._z_location = GL.glGetUniformLocation(self._shader, 'uZScale')
@@ -367,7 +380,7 @@ class LayoutGLView(OpenGLFrame):
                 pass
         self.cb = self.after_idle(self._display)
 
-    def load_layout(self, compiled):
+    def load_layout(self, compiled, fit=True):
         self._clear_pin_labels()
         self._pin_annotations = []
         self.camera.history[:] = []
@@ -401,7 +414,10 @@ class LayoutGLView(OpenGLFrame):
         self._net_rect_ranges = {}
         self._selected_outline_indices = None
         self._net_outline_indices = None
-        self.fit_layout(remember=False)
+        if fit:
+            self.fit_layout(remember=False)
+        if self.pin_paths is not None:
+            self._update_selection()
         if self._gl_ready:
             self._begin_upload()
 
@@ -660,7 +676,46 @@ class LayoutGLView(OpenGLFrame):
 
     def set_palette(self, name):
         self.palette_name = name
+        if name != 'studio':
+            self._metal_palette_name = name
         self.request_redraw()
+
+    @property
+    def style(self):
+        return style_for_palette(self.palette_name)
+
+    def set_style(self, name):
+        """'metal' (original look, keeps the last metal palette) or 'studio' (flat and bright)."""
+        self.set_palette('studio' if name == 'studio' else self._metal_palette_name)
+
+    def set_pin_scope(self, paths=None):
+        """Show pin labels for these hierarchy paths regardless of the module selection (None restores the default)."""
+        self.pin_paths = None if paths is None else [str(path) for path in paths]
+        self._update_selection()
+
+    def _style(self):
+        return STYLES[self.style]
+
+    def _apply_style(self, program):
+        from OpenGL import GL
+
+        spec = self._style()
+        shade, gain, bias = self._style_locations.get(program, (-1, -1, -1))
+        if shade >= 0:
+            GL.glUniform2f(shade, spec['shadeBase'], spec['shadeDiffuse'])
+        if gain >= 0:
+            GL.glUniform3f(gain, *spec['fillGain'])
+        if bias >= 0:
+            GL.glUniform3f(bias, *spec['fillBias'])
+
+    def _outline_color(self, color):
+        gain = self._style()['outlineGain']
+        return (color[0] * gain, color[1] * gain, color[2] * gain)
+
+    def _is_connector(self, layer_id):
+        layers = self.metadata.get('layers') or []
+        layer = layers[layer_id] if 0 <= layer_id < len(layers) else {}
+        return (layer.get('nativeSemantic') or layer.get('kind')) in ('via', 'contact')
 
     def set_theme(self, name):
         self.theme = 'light' if name == 'light' else 'dark'
@@ -713,7 +768,7 @@ class LayoutGLView(OpenGLFrame):
     def _update_selection(self):
         import numpy
 
-        self._pin_annotations = pin_annotations(self.selected_pins(), self.selected_pin)
+        self._pin_annotations = pin_annotations(self._annotated_pins(), self.selected_pin)
         selected = hierarchy_ids(self.metadata, self.selected_paths)
         pins = [self.selected_pin] if self.selected_pin is not None else None
         physical = self.physical_shape_indices is not None
@@ -781,6 +836,9 @@ class LayoutGLView(OpenGLFrame):
 
     def selected_pins(self):
         return selected_pins(self.metadata, self.selected_paths)
+
+    def _annotated_pins(self):
+        return selected_pins(self.metadata, self.pin_paths) if self.pin_paths is not None else self.selected_pins()
 
     def _button_one_press(self, event):
         mode = 'pan' if int(getattr(event, 'state', 0)) & 0x0001 else 'orbit'
@@ -951,6 +1009,8 @@ class LayoutGLView(OpenGLFrame):
         layers = (self._fast_layers() if self.fast_mode else sorted(self._rect_ranges)) if include_routes else []
         GL.glUseProgram(self._shader)
         GL.glUniform1f(self._z_location, 10.0 * self.z_scale)
+        self._apply_style(self._shader)
+        connector_outlines = self._style()['connectorOutlines']
         for layer_id in layers:
             if not self.layer_visibility.get(layer_id, True):
                 continue
@@ -963,7 +1023,9 @@ class LayoutGLView(OpenGLFrame):
             color = self._layer_color(layer_id)
             if not self.fast_mode and not use_lod:
                 self._draw_instances(buffer_id, start, count, color, False)
-            self._draw_instances(buffer_id, start, count, color, True, True)
+            if self.fast_mode or connector_outlines or not self._is_connector(layer_id):
+                self._draw_instances(buffer_id, start, count,
+                                     color if self.fast_mode else self._outline_color(color), True, True)
         if self.instances_visible:
             self._draw_instances(
                 self._instance_buffer, 0, getattr(self, '_instance_count', 0),
@@ -1037,6 +1099,7 @@ class LayoutGLView(OpenGLFrame):
         scale = 10.0 * self.z_scale
         GL.glUseProgram(self._polygon_shader)
         GL.glUniform1f(self._polygon_z_location, scale)
+        self._apply_style(self._polygon_shader)
         if not self.fast_mode:
             GL.glUniform1f(self._polygon_outline_location, 0.0)
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._triangle_buffer)
@@ -1052,8 +1115,11 @@ class LayoutGLView(OpenGLFrame):
         for layer_id in sorted(self._outline_layer_indices):
             if not self.layer_visibility.get(layer_id, True) or (fast_layers is not None and layer_id not in fast_layers):
                 continue
+            if not self.fast_mode and not self._style()['connectorOutlines'] and self._is_connector(layer_id):
+                continue
             color = self._layer_color(layer_id)
-            self._draw_outline_indices(self._outline_layer_indices[layer_id], color)
+            self._draw_outline_indices(self._outline_layer_indices[layer_id],
+                                       color if self.fast_mode else self._outline_color(color))
         GL.glLineWidth(1.0)
         GL.glUseProgram(0)
 
@@ -1219,9 +1285,12 @@ class LayoutGLView(OpenGLFrame):
             entry['source'] = annotation['source']
             # The source name is the entire name row; figure identity is separate.
             name_text = annotation['name'] or '(unnamed pin)'
-            detail_text = '%s | figure %d/%d' % (annotation['layer'], annotation['figureNumber'], annotation['figureCount'])
-            if annotation['path']:
-                detail_text += ' | ' + annotation['path'].rsplit('/', 1)[-1]
+            if self.compact_pin_labels:
+                detail_text = annotation['layer']
+            else:
+                detail_text = '%s | figure %d/%d' % (annotation['layer'], annotation['figureNumber'], annotation['figureCount'])
+                if annotation['path']:
+                    detail_text += ' | ' + annotation['path'].rsplit('/', 1)[-1]
             if annotation['active']:
                 detail_text = 'CURRENT | ' + detail_text
             if not (0 <= projected[0] <= width and 0 <= projected[1] <= height):
@@ -1323,7 +1392,7 @@ class LayoutGLView(OpenGLFrame):
                 height = self._pin_layer_height(annotation['source'])
                 GL.glLineWidth(2.5 if annotation['active'] else 1.2)
                 active_color = (1.0, 1.0, 1.0) if self.theme == 'dark' else (0.05, 0.08, 0.1)
-                pin_color = (0.94, 0.81, 0.36) if self.theme == 'dark' else (0.46, 0.34, 0.08)
+                pin_color = self._style()['pin'][self.theme]
                 GL.glColor3f(*(active_color if annotation['active'] else pin_color))
                 # Draw the actual source boundary at its layer, with no size inflation.
                 for ring in annotation['rings']:
@@ -1358,7 +1427,7 @@ class LayoutGLView(OpenGLFrame):
     def redraw(self):
         from OpenGL import GL
 
-        background = (0.035, 0.043, 0.046, 1.0) if self.theme == 'dark' else (0.92, 0.92, 0.89, 1.0)
+        background = tuple(self._style()['background'][self.theme]) + (1.0,)
         GL.glClearColor(*background)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
         self._set_camera()

@@ -31,6 +31,7 @@ PALETTE_LABELS = {
     'Aurora': 'aurora',
     'Plasma': 'plasma',
     'Titanium': 'titanium',
+    'Studio (flat, bright)': 'studio',
 }
 
 

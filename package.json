@@ -18,6 +18,7 @@
     "vl3d.config.example.json",
     "docs/INSTALL.md",
     "docs/TROUBLESHOOTING.md",
+    "docs/EMBEDDING.md",
     "requirements-native.txt",
     "native/*.py",
     "profiles/*.json",

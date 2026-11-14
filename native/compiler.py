@@ -398,6 +398,12 @@ def _safe_id(table, lookup, value):
 
 
 def _compile_arrays(path, metadata, layers, ijson, numpy):
+    with _source_open(path) as handle:
+        return _compile_shape_arrays(ijson.items(handle, 'shapes.item', use_float=True), metadata, layers, numpy)
+
+
+def _compile_shape_arrays(shapes, metadata, layers, numpy):
+    """Build the GPU arrays from any iterable of schema-v2 shape dicts (file stream or in memory)."""
     layer_lookup = dict((item['name'], item['index']) for item in layers)
     hierarchy_paths = []
     hierarchy_lookup = {}
@@ -453,73 +459,72 @@ def _compile_arrays(path, metadata, layers, ijson, numpy):
         outline_nets.append(net_id)
         outline_shape_indices.append(shape_index)
 
-    with _source_open(path) as handle:
-        for shape_index, shape in enumerate(ijson.items(handle, 'shapes.item', use_float=True)):
-            if not isinstance(shape, dict):
-                continue
-            purpose = _normalized_text(shape.get('purpose')).lower()
-            shape_type = _normalized_text(shape.get('type')).lower()
-            if purpose == 'pin' or 'text' in shape_type or 'label' in shape_type or is_non_conductive_purpose(purpose):
-                continue
-            bbox = _valid_bbox(shape.get('bbox'))
-            if not bbox:
-                continue
-            layer_name = _normalized_layer(shape.get('layer'))
-            if layer_name not in layer_lookup:
-                index = len(layers)
-                bottom = max([item['nativeTopUm'] for item in layers] or [0.0])
-                layer = {
-                    'name': layer_name or 'UNKNOWN_%d' % index,
-                    'index': index,
-                    'semantic': 'unknown',
-                    'nativeSemantic': 'unknown',
-                    'nativeBottomUm': bottom,
-                    'nativeTopUm': bottom + 0.2,
-                    'thickness': 0.2,
-                    'defaultVisible': False,
-                    'routing': False,
-                    'color': '#8ecae6',
-                }
-                layers.append(layer)
-                layer_lookup[layer['name']] = index
-                layer_name = layer['name']
-            layer_id = layer_lookup[layer_name]
-            layer = layers[layer_id]
-            if shape.get('routing') is False and layer.get('nativeSemantic') in ('poly', 'contact', 'metal', 'via'):
-                continue
-            bottom = float(layer['nativeBottomUm'])
-            top = float(layer['nativeTopUm'])
-            hierarchy = _normalized_text(shape.get('hierPath'))
-            hierarchy_id = _safe_id(hierarchy_paths, hierarchy_lookup, hierarchy)
-            net = _normalized_text(shape.get('net'))
-            net_id = _safe_id(net_keys, net_lookup, '%s::%s' % (hierarchy, net) if net else '')
-            # Preserve old bbox-only previews without expanding the bbox a second time.
-            is_path = shape_type in ('path', 'pathseg') and not _legacy_pathseg_bbox(shape)
-            points = _clean_points(shape.get('points'), closed=not is_path)
-            rectangle_shape = shape_type in ('rect', 'box', 'rectangle')
-            if not shape.get('holes') and ((rectangle_shape and not points) or (not is_path and _axis_rectangle(shape.get('points')))):
-                rectangles.append((bbox[0], bbox[1], bbox[2], bbox[3], bottom, top))
-                rectangle_layers.append(layer_id)
-                rectangle_hierarchy.append(hierarchy_id)
-                rectangle_nets.append(net_id)
-                rectangle_shape_indices.append(shape_index)
-                continue
-            if not points and not rectangle_shape:
-                raise Vl3dError('E9003', 'Layout shape has no polygon boundary: %s' % shape_type)
-            if shape.get('holes') and not points:
-                points = [(bbox[0], bbox[1]), (bbox[2], bbox[1]), (bbox[2], bbox[3]), (bbox[0], bbox[3])]
-            footprints = _path_footprints(points, shape.get('width'), shape) if is_path else [points]
-            if not is_path and shape.get('holes'):
-                try:
-                    import gdstk
-                except ImportError:
-                    raise Vl3dError('E1013', 'Polygon holes require the bundled gdstk dependency')
-                holes = [_clean_points(hole) for hole in shape['holes']]
-                footprints = [_clean_points(p.points.tolist()) for p in gdstk.boolean(
-                    [points], [hole for hole in holes if len(hole) >= 3], 'not',
-                    precision=max(1e-9, 1.0 / max(float(metadata.get('dbuPerMicron') or 1000), 1.0)))]
-            for footprint in footprints:
-                add_polygon(footprint, layer_id, hierarchy_id, net_id, bottom, top, shape_index)
+    for shape_index, shape in enumerate(shapes):
+        if not isinstance(shape, dict):
+            continue
+        purpose = _normalized_text(shape.get('purpose')).lower()
+        shape_type = _normalized_text(shape.get('type')).lower()
+        if purpose == 'pin' or 'text' in shape_type or 'label' in shape_type or is_non_conductive_purpose(purpose):
+            continue
+        bbox = _valid_bbox(shape.get('bbox'))
+        if not bbox:
+            continue
+        layer_name = _normalized_layer(shape.get('layer'))
+        if layer_name not in layer_lookup:
+            index = len(layers)
+            bottom = max([item['nativeTopUm'] for item in layers] or [0.0])
+            layer = {
+                'name': layer_name or 'UNKNOWN_%d' % index,
+                'index': index,
+                'semantic': 'unknown',
+                'nativeSemantic': 'unknown',
+                'nativeBottomUm': bottom,
+                'nativeTopUm': bottom + 0.2,
+                'thickness': 0.2,
+                'defaultVisible': False,
+                'routing': False,
+                'color': '#8ecae6',
+            }
+            layers.append(layer)
+            layer_lookup[layer['name']] = index
+            layer_name = layer['name']
+        layer_id = layer_lookup[layer_name]
+        layer = layers[layer_id]
+        if shape.get('routing') is False and layer.get('nativeSemantic') in ('poly', 'contact', 'metal', 'via'):
+            continue
+        bottom = float(layer['nativeBottomUm'])
+        top = float(layer['nativeTopUm'])
+        hierarchy = _normalized_text(shape.get('hierPath'))
+        hierarchy_id = _safe_id(hierarchy_paths, hierarchy_lookup, hierarchy)
+        net = _normalized_text(shape.get('net'))
+        net_id = _safe_id(net_keys, net_lookup, '%s::%s' % (hierarchy, net) if net else '')
+        # Preserve old bbox-only previews without expanding the bbox a second time.
+        is_path = shape_type in ('path', 'pathseg') and not _legacy_pathseg_bbox(shape)
+        points = _clean_points(shape.get('points'), closed=not is_path)
+        rectangle_shape = shape_type in ('rect', 'box', 'rectangle')
+        if not shape.get('holes') and ((rectangle_shape and not points) or (not is_path and _axis_rectangle(shape.get('points')))):
+            rectangles.append((bbox[0], bbox[1], bbox[2], bbox[3], bottom, top))
+            rectangle_layers.append(layer_id)
+            rectangle_hierarchy.append(hierarchy_id)
+            rectangle_nets.append(net_id)
+            rectangle_shape_indices.append(shape_index)
+            continue
+        if not points and not rectangle_shape:
+            raise Vl3dError('E9003', 'Layout shape has no polygon boundary: %s' % shape_type)
+        if shape.get('holes') and not points:
+            points = [(bbox[0], bbox[1]), (bbox[2], bbox[1]), (bbox[2], bbox[3]), (bbox[0], bbox[3])]
+        footprints = _path_footprints(points, shape.get('width'), shape) if is_path else [points]
+        if not is_path and shape.get('holes'):
+            try:
+                import gdstk
+            except ImportError:
+                raise Vl3dError('E1013', 'Polygon holes require the bundled gdstk dependency')
+            holes = [_clean_points(hole) for hole in shape['holes']]
+            footprints = [_clean_points(p.points.tolist()) for p in gdstk.boolean(
+                [points], [hole for hole in holes if len(hole) >= 3], 'not',
+                precision=max(1e-9, 1.0 / max(float(metadata.get('dbuPerMicron') or 1000), 1.0)))]
+        for footprint in footprints:
+            add_polygon(footprint, layer_id, hierarchy_id, net_id, bottom, top, shape_index)
 
     order = numpy.argsort(numpy.asarray(rectangle_layers, dtype=numpy.uint16), kind='stable') if rectangles else []
     rects = numpy.asarray(rectangles, dtype=numpy.float32).reshape((-1, 6))
@@ -613,6 +618,42 @@ def _compile_arrays(path, metadata, layers, ijson, numpy):
         'aggregatedConnectorCount': len(lod_rects),
     }
     return arrays, hierarchy_paths, net_keys, lod_metadata
+
+
+def compile_scene(scene):
+    """Compile an in-memory schema-v2 layout dict for immediate display (no cache, no files).
+
+    Used by embedded previews (see native/embed.py). Needs numpy only; ijson is not required.
+    """
+    try:
+        import numpy
+    except ImportError:
+        raise Vl3dError('E1013', 'The 3D preview requires numpy')
+    if not isinstance(scene, dict):
+        raise Vl3dError('E9003', 'Scene must be a layout dict')
+    metadata = dict((key, scene.get(key)) for key in TARGET_ARRAYS + TARGET_OBJECTS + SCALAR_KEYS if key in scene)
+    for key in TARGET_ARRAYS:
+        metadata[key] = list(metadata.get(key) or [])
+    metadata.setdefault('cell', scene.get('cell') or 'preview')
+    metadata.setdefault('units', 'um')
+    try:
+        validate_viewer_units(metadata)
+    except ValueError as error:
+        raise Vl3dError('E4003', str(error))
+    layers = _layer_stack(metadata.get('layers') or [])
+    arrays, hierarchy_paths, net_keys, lod_metadata = _compile_shape_arrays(
+        scene.get('shapes') or [], metadata, layers, numpy)
+    metadata.update({
+        'cacheAbi': 1,
+        'compilerVersion': COMPILER_VERSION,
+        'layers': layers,
+        'hierarchyPaths': hierarchy_paths,
+        'netKeys': net_keys,
+        'viaLod': lod_metadata,
+        'arrays': dict((name, list(array.shape)) for name, array in arrays.items()),
+    })
+    from .cache import CompiledLayout
+    return CompiledLayout(None, metadata, arrays)
 
 
 def compile_layout(source, target, fingerprint):
