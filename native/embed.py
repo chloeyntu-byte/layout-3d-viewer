@@ -315,21 +315,18 @@ class Preview3D(object):
                     wraplength=420).pack(fill='both', expand=True, padx=12, pady=12)
 
     def _gl_failed(self, error):
-        """OpenGL context, extension or shader setup failed: degrade to the message, like available() == False."""
+        """OpenGL context, extension or shader setup failed: degrade to the message, like available() == False.
+
+        Runs inside the view's own <Map> callback, so the view is only hidden, never destroyed here;
+        it stays inert (it no longer draws) and goes away with the frame. Nothing is scheduled.
+        """
         self.ok, self.reason = False, str(error)
         self._cancel_pending()
         view, self.view = self.view, None
-
-        def replace():
-            # Deferred: this runs inside the view's own map callback, which must return first.
-            if view is not None:
-                try:
-                    view.destroy()
-                except Exception:
-                    pass
-            if not self._destroyed:
-                self._show_unavailable()
-        self.frame.after_idle(replace)
+        if view is not None:
+            view.pack_forget()
+        if not self._destroyed:
+            self._show_unavailable()
 
     def _cancel_pending(self):
         self._pending = None

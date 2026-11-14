@@ -129,6 +129,7 @@ class LayoutGLView(OpenGLFrame):
         self.compact_pin_labels = False  # True: label detail is the layer name only (embedded previews)
         self.extended_palette = False  # True: repeat metal colours above M6 and share VIA aliases (previews)
         self.init_error_callback = None  # called with the error if OpenGL setup fails; otherwise it is raised
+        self._gl_failed = False  # set once context or initgl failed: the view then never draws
         self.theme = 'dark'
         self.resource_mode = 'balanced'
         self.z_scale = 1.0
@@ -200,15 +201,29 @@ class LayoutGLView(OpenGLFrame):
         self.bind('<Button-5>', lambda event: self._wheel(-1.0))
         self.bind('<MouseWheel>', self._mouse_wheel)
 
-    def initgl(self):
+    def tkMap(self, event):
+        # pyopengltk creates the context and then calls initgl() here; either can fail.
+        if self._gl_failed:
+            return
         try:
-            self._initgl()
+            OpenGLFrame.tkMap(self, event)
         except Exception as error:
+            self._gl_failed = True
             if self.init_error_callback is None:
                 raise
             self.init_error_callback(error)
 
-    def _initgl(self):
+    def tkExpose(self, event):
+        if self._gl_failed or not getattr(self, 'context_created', False):
+            return
+        OpenGLFrame.tkExpose(self, event)
+
+    def _display(self):
+        if self._gl_failed or not getattr(self, 'context_created', False):
+            return
+        OpenGLFrame._display(self)
+
+    def initgl(self):
         from OpenGL import GL
         from OpenGL.GL import shaders
         from OpenGL.GL.ARB.draw_instanced import glDrawArraysInstancedARB
@@ -337,7 +352,7 @@ class LayoutGLView(OpenGLFrame):
 
         self.width = max(1, int(event.width))
         self.height = max(1, int(event.height))
-        if getattr(self, 'context_created', False) and self.winfo_ismapped():
+        if not self._gl_failed and getattr(self, 'context_created', False) and self.winfo_ismapped():
             self.tkMakeCurrent()
             GL.glViewport(0, 0, self.width, self.height)
             self.request_redraw()
