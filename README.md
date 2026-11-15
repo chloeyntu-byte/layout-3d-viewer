@@ -92,14 +92,25 @@ npm test                                                     # unit and integrat
 - The screenshot buttons capture the 3D scene without the pin label overlay. Clipboard copy is Linux-only and needs `wl-copy` or `xclip`; otherwise use *Save screenshot*.
 - The browser client is kept as a compatibility entry point; the native client is the primary interface.
 
+## Not included in this repository
+
+The following are not part of this repository:
+
+- A layer profile or stream layer map for your process. Only `profiles/generic.json` and the fictional `profiles/example-process.json` ship; write your own as described in [docs/LAYER_PROFILES.md](docs/LAYER_PROFILES.md).
+- Your Cadence Virtuoso environment, OA libraries and licences, needed only for OA loading.
+- The VCO layout shown on the product page (`VCO_demo`). The repository's examples are synthetic.
+
+If you need one of these, or an example for your setup, please open a [GitHub issue](https://github.com/chloeyntu-byte/layout-3d-viewer/issues); the maintainer will reply there.
+
 ## RF-FIELDWORK
 
-Product page: https://rf-fieldwork.pages.dev/layout/?lang=en
+- Lab home (all tools, narrated films and progress): https://rf-fieldwork.pages.dev/?lang=en
+- This tool's page (with a narrated film): https://rf-fieldwork.pages.dev/layout/?lang=en
 
 Other open-source tools:
 
 - [Flux Studio](https://github.com/chloeyntu-byte/flux-studio): parametric RF passives, EMX sweeps, multi-objective search and SNPFit
-- [Cap Array Lab](https://github.com/chloeyntu-byte/cap-array-lab): capacitor-array C/Q, parasitic paths, resonance and Z11
+- [Tank Scan Lab](https://github.com/chloeyntu-byte/tank-scan-lab): LC tank scans (f0, Rp, gm, startup margin, loss shares), capacitor-array C/Q and resonance
 - [VCO ISF Explorer](https://github.com/chloeyntu-byte/vco-isf-explorer): ISF, flicker-noise up-conversion and phase-noise contributions
 - [Crescendo](https://github.com/chloeyntu-byte/crescendo): automatic device-size optimization inside Cadence Maestro
 - [VCO Design Studio](https://github.com/chloeyntu-byte/vco-design-studio): five literature LC VCO topology families, packaged schematics and native export

@@ -92,14 +92,25 @@ npm test                                                     # 单元与集成�
 - 截图按钮截取的是不含 pin 标签覆盖层的三维场景。复制到剪贴板仅限 Linux，需要 `wl-copy` 或 `xclip`，否则请用 *Save screenshot*。
 - 浏览器客户端保留为兼容入口，原生客户端是主界面。
 
+## 未随仓库提供的内容
+
+以下内容不随本仓库提供：
+
+- 你所用工艺的层定义文件或 stream layer map。仓库只带 `profiles/generic.json` 和虚构的 `profiles/example-process.json`；自己的文件可按 [docs/LAYER_PROFILES.md](docs/LAYER_PROFILES.md) 编写。
+- 你自己的 Cadence Virtuoso 环境、OA 库和许可证，只有读取 OA 时才需要。
+- 产品页里展示的 VCO 版图（`VCO_demo`）。仓库自带的示例都是合成的。
+
+需要其中某一项，或想为你的环境要一个示例，请在 [GitHub Issues](https://github.com/chloeyntu-byte/layout-3d-viewer/issues) 提出，维护者会在那里回复。
+
 ## RF-FIELDWORK
 
-产品介绍页：https://rf-fieldwork.pages.dev/layout/?lang=zh（含配音演示片的工具在页面上可直接观看）
+- 总站（全部工具、演示片与项目进展）：https://rf-fieldwork.pages.dev/?lang=zh
+- 本工具介绍页（含配音演示片）：https://rf-fieldwork.pages.dev/layout/?lang=zh
 
 其他开源工具：
 
 - [Flux Studio](https://github.com/chloeyntu-byte/flux-studio)：参数化射频无源器件、EMX 扫参、多目标优化与 SNPFit 拟合
-- [Cap Array Lab](https://github.com/chloeyntu-byte/cap-array-lab)：电容阵列 C/Q、寄生路径、谐振与 Z11
+- [Tank Scan Lab](https://github.com/chloeyntu-byte/tank-scan-lab)：LC 谐振腔扫描（f0、Rp、gm、起振裕量、损耗分摊）、电容阵列 C/Q 与谐振
 - [VCO ISF Explorer](https://github.com/chloeyntu-byte/vco-isf-explorer)：ISF、闪烁噪声上变频与相噪贡献
 - [Crescendo](https://github.com/chloeyntu-byte/crescendo)：在 Cadence Maestro 里自动优化器件尺寸
 - [VCO Design Studio](https://github.com/chloeyntu-byte/vco-design-studio)：五类文献 LC VCO 拓扑、分层原理图与原生导出
